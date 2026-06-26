@@ -1,0 +1,1186 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Consulta Neurología General — apoyo a la documentación</title>
+<style>
+  :root{
+    --bg:#0f1115; --panel:#171a21; --panel2:#1e222c; --ink:#e6e8ec;
+    --muted:#9aa3b2; --line:#2a2f3a; --accent:#6aa3ff; --accent2:#3d6fd1;
+    --ok:#57c08a; --warn:#e0a85a; --danger:#e06a6a; --mono:ui-monospace,Menlo,Consolas,monospace;
+  }
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--bg);color:var(--ink);font:15px/1.5 system-ui,-apple-system,Segoe UI,Roboto,sans-serif}
+  header{padding:12px 20px;border-bottom:1px solid var(--line);display:flex;align-items:center;gap:14px;flex-wrap:wrap}
+  header h1{font-size:15px;margin:0;font-weight:600}
+  header .note{color:var(--muted);font-size:12px}
+  nav{display:flex;gap:4px;padding:8px 16px;border-bottom:1px solid var(--line);background:var(--panel);flex-wrap:wrap;position:sticky;top:0;z-index:20}
+  nav button{background:transparent;border:1px solid transparent;color:var(--muted);padding:7px 13px;border-radius:8px;cursor:pointer;font-size:14px;font-weight:500}
+  nav button:hover{color:var(--ink);background:var(--panel2)}
+  nav button.active{color:var(--ink);background:var(--panel2);border-color:var(--line)}
+  main{padding:18px;max-width:1180px;margin:0 auto}
+  .tab{display:none}.tab.active{display:block}
+  .grid{display:grid;gap:14px}
+  .g2{grid-template-columns:1fr 1fr}
+  @media(max-width:900px){.g2{grid-template-columns:1fr}}
+  .card{background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:16px;margin-bottom:14px}
+  .card h2{font-size:13px;margin:0 0 12px;color:var(--accent);font-weight:600;text-transform:uppercase;letter-spacing:.5px;display:flex;justify-content:space-between;align-items:center;gap:8px;flex-wrap:wrap}
+  label{display:block;font-size:12px;color:var(--muted);margin:0 0 4px}
+  input,select,textarea{width:100%;background:var(--panel2);border:1px solid var(--line);color:var(--ink);border-radius:8px;padding:8px 10px;font:inherit}
+  textarea{min-height:64px;resize:vertical}
+  #campos textarea{min-height:92px;line-height:1.45;font-size:14px}
+  #campos textarea.campo-sm{min-height:38px}
+  #campos label{font-size:11px}
+  #campos .row{margin-bottom:8px}
+  #informe .out{min-height:220px;font-size:13px;line-height:1.5}
+  .row{margin-bottom:10px}
+  .secthead{display:flex;justify-content:space-between;align-items:center;gap:8px;margin-bottom:4px;flex-wrap:wrap}
+  .secthead .btns{display:flex;gap:5px;flex-wrap:wrap}
+  .btn{background:var(--accent2);border:none;color:#fff;padding:8px 14px;border-radius:8px;cursor:pointer;font:inherit;font-weight:600;font-size:13px}
+  .btn:hover{background:var(--accent)}
+  .btn.ghost{background:transparent;border:1px solid var(--line);color:var(--ink)}
+  .btn.sm{padding:4px 10px;font-size:12px}
+  .out{background:var(--bg);border:1px dashed var(--line);border-radius:10px;padding:14px;font-family:var(--mono);font-size:13px;white-space:pre-wrap;min-height:80px}
+  .pill{display:inline-block;font-size:11px;padding:2px 8px;border-radius:20px;border:1px solid var(--line);color:var(--muted);margin-left:6px}
+  .seg{display:flex;border:1px solid var(--line);border-radius:8px;overflow:hidden}
+  .seg button{background:var(--panel2);border:none;color:var(--muted);padding:8px 16px;cursor:pointer;font:inherit;font-size:14px;border-right:1px solid var(--line);font-weight:600}
+  .seg button:last-child{border-right:none}
+  .seg button.on{background:var(--accent2);color:#fff}
+  .flex{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+  .copybtn{cursor:pointer;color:var(--muted);font-size:11px;border:1px solid var(--line);background:transparent;border-radius:6px;padding:3px 9px}
+  .petbtn.peton{background:var(--accent2);color:#fff;border-color:var(--accent2)}
+  .copybtn:hover{color:var(--ink);border-color:var(--accent)}
+  .mini{font-size:11px;color:var(--muted)}
+  .toast{position:fixed;bottom:20px;left:50%;transform:translateX(-50%);background:var(--ok);color:#06281a;padding:9px 18px;border-radius:8px;font-weight:600;font-size:13px;opacity:0;transition:opacity .2s;pointer-events:none;z-index:50}
+  .toast.show{opacity:1}
+  .disclaimer{font-size:11px;color:var(--muted);border-top:1px solid var(--line);padding:12px 20px;margin-top:20px;line-height:1.6}
+  /* escalas */
+  .scaleList{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:14px}
+  .scaleList button{background:var(--panel2);border:1px solid var(--line);color:var(--muted);padding:6px 11px;border-radius:20px;cursor:pointer;font-size:13px}
+  .scaleList button.on{background:var(--accent2);color:#fff;border-color:var(--accent2)}
+  .scorebar{background:linear-gradient(180deg,var(--panel),var(--panel2));border:1px solid var(--line);border-radius:12px;padding:12px 16px;margin-bottom:14px;display:flex;align-items:center;gap:16px;flex-wrap:wrap}
+  .scorebar .big{font-size:26px;font-weight:700;font-family:var(--mono)}
+  .scorebar .fsstring{font-family:var(--mono);font-size:13px;color:var(--muted)}
+  .item-q{display:flex;justify-content:space-between;align-items:flex-start;gap:10px;padding:8px 0;border-bottom:1px solid var(--line)}
+  .item-q:last-child{border-bottom:none}.item-q .q{flex:1;font-size:13px}
+  .item-q .q small{color:var(--muted);display:block;margin-top:2px}
+  .item-q select,.item-q input{width:auto;min-width:60px}
+  .lblinput{min-width:200px!important;width:auto;background:var(--bg);border:1px solid var(--accent2);border-radius:6px;color:var(--ink);padding:4px 8px;font-size:13px}
+  .opt{display:flex;gap:8px;align-items:flex-start;padding:5px 8px;border-radius:6px;cursor:pointer;font-size:13px}
+  .opt:hover{background:var(--bg)}.opt input{width:auto;margin-top:3px}.opt .lab{flex:1}
+  /* tratamientos */
+  details.fam{border:1px solid var(--line);border-radius:10px;margin-bottom:8px;background:var(--panel)}
+  details.fam>summary{cursor:pointer;padding:11px 14px;font-weight:600;font-size:14px;color:var(--ink);list-style:none;user-select:none;display:flex;align-items:center;gap:8px}
+  details.fam>summary::-webkit-details-marker{display:none}
+  details.fam>summary::before{content:'▸';color:var(--accent);font-size:12px;transition:transform .15s}
+  details.fam[open]>summary::before{transform:rotate(90deg)}
+  details.fam[open]>summary{border-bottom:1px solid var(--line)}
+  .indic{margin:10px 12px;padding:10px 12px;border:1px solid var(--line);border-radius:8px;background:var(--panel2)}
+  .indic h4{margin:0 0 6px;font-size:13px;color:var(--accent)}
+  .planbox{width:100%;min-height:54px;background:var(--bg);border:1px solid var(--accent2);border-radius:8px;color:var(--ink);padding:8px 10px;font:inherit;font-size:13px;line-height:1.4;resize:vertical}
+  .planbox:focus{outline:none;border-color:var(--accent)}
+  .reco{margin-top:8px;padding-top:8px;border-top:1px dotted var(--line);user-select:none}
+  .reco ul{margin:0;padding-left:16px}.reco li{font-size:12px;color:var(--muted);margin:3px 0}
+  /* monigote NM */
+  .nm-layout{display:grid;grid-template-columns:300px 1fr;gap:14px;align-items:start}
+  @media(max-width:860px){.nm-layout{grid-template-columns:1fr}}
+  #nmsvg svg{width:100%;height:auto;max-height:520px}
+  .mz{fill:var(--panel2);stroke:var(--line);stroke-width:1.4;cursor:pointer;transition:fill .12s,stroke .12s}
+  .mz:hover{fill:#26303f;stroke:var(--accent)}
+  .mz.ab{fill:rgba(224,108,108,.30);stroke:var(--danger);stroke-width:2}
+  .mzlab{font-size:7.5px;fill:var(--muted);pointer-events:none;text-anchor:middle}
+  .nm-detail{min-height:60px}
+  .grp{border:1px solid var(--line);border-radius:9px;padding:10px;margin-bottom:8px;background:var(--panel2)}
+  .grp .gh{display:flex;justify-content:space-between;align-items:center;font-weight:600;font-size:13px;margin-bottom:6px}
+  .grp .controls{display:grid;grid-template-columns:repeat(auto-fit,minmax(120px,1fr));gap:6px}
+  .grp .controls label{font-size:10px}
+  .grp .controls select,.grp .controls input{font-size:12px;padding:4px 6px}
+  .seg-toggle{display:flex;gap:5px;flex-wrap:wrap;margin-bottom:10px}
+  .seg-toggle button{background:var(--panel2);border:1px solid var(--line);color:var(--muted);border-radius:7px;padding:5px 10px;font-size:12px;cursor:pointer}
+  .seg-toggle button.on{background:var(--accent2);color:#fff;border-color:var(--accent2)}
+</style>
+</head>
+<body>
+<header>
+  <h1>Consulta Neurología General <span class="pill">determinista · 100% local · sin IA</span></h1>
+  <span class="note">Ningún dato sale del navegador · Verificar siempre antes de prescribir</span>
+</header>
+
+<nav>
+  <button data-tab="informe" class="active">Informe</button>
+  <button data-tab="explora">Exploración</button>
+  <button data-tab="escalas">Escalas</button>
+  <button data-tab="trat">Tratamientos</button>
+  <button data-tab="nofarma">No farmacológico</button>
+</nav>
+
+<main>
+
+<!-- ============ INFORME ============ -->
+<section class="tab active" id="informe">
+  <div class="flex" style="margin-bottom:14px">
+    <div class="seg" id="tipoInforme">
+      <button data-tipo="primera" class="on">Primera visita</button>
+      <button data-tipo="seguimiento">Seguimiento</button>
+    </div>
+  </div>
+  <div class="grid g2">
+    <div>
+      <div class="card">
+        <h2>Datos estructurados <button class="btn ghost sm" onclick="limpiarInforme()">Limpiar</button></h2>
+        <div id="campos"></div>
+        <button class="btn" onclick="genInforme()">Generar informe</button>
+      </div>
+    </div>
+    <div>
+      <div class="card">
+        <h2>Informe <button class="copybtn" onclick="copyText(buildInforme(),this)">copiar todo</button></h2>
+        <div class="out" id="out_informe">Elige tipo de informe, rellena y pulsa «Generar».</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ============ EXPLORACIÓN ============ -->
+<section class="tab" id="explora">
+  <div class="card">
+    <h2>Plantillas de exploración</h2>
+    <p class="mini">Cribado y ENRL detallada tienen botón de volcado directo junto a «Exploración» en el informe. Las demás se vuelcan desde aquí. El examen neuromuscular se construye con el monigote de abajo.</p>
+    <div class="scaleList" id="explTabs"></div>
+    <textarea id="explOut" style="min-height:220px;font-family:var(--mono);font-size:13px"></textarea>
+    <div class="flex" style="margin-top:8px">
+      <button class="btn ghost sm" onclick="insertExpl($('explOut').value)">↑ Volcar a «Exploración» del informe</button>
+    </div>
+  </div>
+
+  <div class="card">
+    <h2>Examen neuromuscular (monigote)</h2>
+    <div class="seg-toggle" id="nmSegToggle"></div>
+    <div class="nm-layout">
+      <div><div id="nmsvg"></div></div>
+      <div>
+        <div class="flex" style="margin-bottom:8px">
+          <button class="btn sm" onclick="genNM()">Generar exploración NM</button>
+          <button class="btn ghost sm" onclick="insertExpl(window._NM||'')">↑ Volcar a Exploración</button>
+          <button class="btn ghost sm" onclick="resetNM()">Reiniciar</button>
+        </div>
+        <div class="out" id="nmOut" style="min-height:80px">Por defecto todo normal (BM 5/5, no amiotrofia, sin fasciculaciones, tono normal, REM presentes). Toca un grupo para marcar lo patológico.</div>
+        <div class="flex" style="margin-top:8px;gap:10px">
+          <div style="flex:1"><label>REM</label><input type="text" id="nm_rem" value="++/++++ simétricos"></div>
+          <div style="flex:1"><label>Sensibilidad apendicular</label><input type="text" id="nm_sens" value="no hipoestesia ni hipopalestesia apendicular"></div>
+        </div>
+        <div id="nmDetail" class="nm-detail" style="margin-top:10px"></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ============ ESCALAS ============ -->
+<section class="tab" id="escalas">
+  <div class="scaleList" id="scaleTabs"></div>
+  <div id="scaleHost"></div>
+</section>
+
+<!-- ============ TRATAMIENTOS ============ -->
+<section class="tab" id="trat">
+  <div class="card" style="background:var(--panel2)">
+    <h2>Tratamientos farmacológicos</h2>
+    <p class="mini">Orden alfabético. Cada fármaco despliega sus indicaciones con la pauta habitual para cada una. Principios activos en mayúscula. El plan es editable y se guarda; al copiar o volcar se inserta solo el plan (texto para el paciente). Pautas orientativas: revisar antes de prescribir.</p>
+    <div class="flex" style="margin-top:8px"><button class="btn ghost sm" onclick="resetPlans()">Restaurar planes por defecto</button></div>
+  </div>
+  <div id="tratHost"></div>
+</section>
+
+<!-- ============ NO FARMACOLÓGICO ============ -->
+<section class="tab" id="nofarma">
+  <div id="nfHost"></div>
+</section>
+
+</main>
+
+<div class="disclaimer">
+  Herramienta de apoyo a la documentación clínica. No sustituye el juicio del facultativo ni la ficha técnica vigente. Escalas, exploraciones y pautas son orientativas y deben verificarse antes de su uso. Procesamiento y almacenamiento 100% local (este navegador); ningún dato se transmite fuera del dispositivo.
+</div>
+<div class="toast" id="toast"></div>
+
+<script>
+function $(id){return document.getElementById(id)}
+function sanitizeDiraya(s){
+  return (s||'')
+    .replace(/→/g,'->').replace(/←/g,'<-')
+    .replace(/≥/g,'>=').replace(/≤/g,'<=')
+    .replace(/—/g,'-').replace(/–/g,'-')
+    .replace(/·/g,'-').replace(/•/g,'-')
+    .replace(/×/g,'x')
+    .replace(/[“”]/g,'"').replace(/[‘’]/g,"'")
+    .replace(/…/g,'...');
+}
+function toast(m){const t=$('toast');t.textContent=m;t.classList.add('show');setTimeout(()=>t.classList.remove('show'),1200)}
+function copyText(t,btn){navigator.clipboard.writeText(t).then(()=>{toast('Copiado');if(btn){const o=btn.textContent;btn.textContent='✓';setTimeout(()=>btn.textContent=o,900)}})}
+document.querySelectorAll('nav button').forEach(b=>{b.onclick=()=>{document.querySelectorAll('nav button').forEach(x=>x.classList.remove('active'));document.querySelectorAll('.tab').forEach(x=>x.classList.remove('active'));b.classList.add('active');$(b.dataset.tab).classList.add('active')}});
+
+/* ===== INFORME ===== */
+const PC_PRIMERA='- RM/TC (/):\n- AS (/):';
+const PC_SEG='- RM/TC (/):\n- AS (/):';
+const CAMPOS_PRI=[
+  ['motivo','Motivo de consulta','MOTIVO DE CONSULTA',true],
+  ['ant','Antecedentes','ANTECEDENTES'],
+  ['ttohab','Tratamiento habitual','TRATAMIENTO HABITUAL'],
+  ['actual','Enfermedad actual','ENFERMEDAD ACTUAL'],
+  ['expl','Exploración','EXPLORACIÓN'],
+  ['pc','Pruebas complementarias','PRUEBAS COMPLEMENTARIAS'],
+  ['jc','Juicio clínico','JUICIO CLÍNICO',true],
+  ['plan','Plan','PLAN'],
+];
+const CAMPOS_SEG=[
+  ['evolucion','Evolución','EVOLUCIÓN'],
+  ['ttohab','Tratamiento habitual','TRATAMIENTO HABITUAL'],
+  ['expl','Exploración','EXPLORACIÓN'],
+  ['pc','Pruebas complementarias','PRUEBAS COMPLEMENTARIAS'],
+  ['jc','Juicio clínico','JUICIO CLÍNICO',true],
+  ['plan','Plan','PLAN'],
+];
+let tipoActual='primera';
+$('tipoInforme').querySelectorAll('button').forEach(b=>{
+  b.onclick=()=>{$('tipoInforme').querySelectorAll('button').forEach(x=>x.classList.remove('on'));b.classList.add('on');tipoActual=b.dataset.tipo;renderCampos();}
+});
+function curCampos(){return tipoActual==='primera'?CAMPOS_PRI:CAMPOS_SEG}
+function renderCampos(){
+  const cc=$('campos');cc.innerHTML='';
+  curCampos().forEach(c=>{
+    const d=document.createElement('div');d.className='row';
+    const small=c[3]?' campo-sm':'';
+    let extraBtns='';
+    if(c[0]==='expl'){extraBtns=`<span class="btns"><button class="copybtn" onclick="insertExpl(EXPL.cribado)">cribado</button><button class="copybtn" onclick="insertExpl(EXPL.enrl)">ENRL det.</button></span>`}
+    if(c[0]==='ttohab'){extraBtns=`<span class="btns"><button class="copybtn" onclick="formatTto()">formatear</button></span>`}
+    if(c[0]==='pc'){extraBtns=`<span class="btns" id="pcBtns"></span>`}
+    if(c[0]==='plan'){extraBtns=`<span class="btns" id="planBtns"></span>`}
+    cc.appendChild(mkField(c,small,extraBtns));
+  });
+  buildPcBtns();
+  buildPlanBtns();
+  genInforme();
+}
+/* --- Pruebas complementarias con fecha (botón junto a PC) --- */
+const PRUEBAS_PC=['RM','TC','Analítica','LCR','EMG/ENG','EEG','Doppler TSA','PEV'];
+const MESES=['Ene','Feb','Mar','Abr','May','Jun','Jul','Ago','Sep','Oct','Nov','Dic'];
+function buildPcBtns(){
+  const host=$('pcBtns');if(!host)return;
+  const now=new Date();const mDef=MESES[now.getMonth()]+'/'+String(now.getFullYear()).slice(2);
+  let html=PRUEBAS_PC.map(p=>`<button class="copybtn" onclick="addPrueba('${p}')">${p}</button>`).join('');
+  html+=` <input id="pcFecha" type="text" value="${mDef}" style="width:64px;padding:3px 6px" placeholder="mes/aa">`;
+  host.innerHTML=html;
+}
+function addPrueba(p){
+  const el=$('i_pc');if(!el)return;
+  const f=($('pcFecha')?$('pcFecha').value:'').trim();
+  const linea=f?`- ${p} (${f}): `:`- ${p} (): `;
+  // evitar duplicar exactamente la misma prueba+fecha
+  const lines=(el.value||'').split('\n');
+  if(lines.some(l=>l.startsWith(`- ${p} (${f}):`))){toast('Ya añadida');return;}
+  el.value=(el.value?el.value.replace(/\s*$/,'')+'\n':'')+linea;
+  genInforme();
+  el.focus();
+  // colocar cursor al final para escribir el resultado
+  el.selectionStart=el.selectionEnd=el.value.length;
+}
+/* --- Peticiones frecuentes + revisión (botón junto a Plan) --- */
+const PETICIONES=['RM craneal','TC craneal','Analítica','EMG/ENG','EEG','Punción lumbar','Doppler TSA','RM medular','Interconsulta'];
+let _petSel=[];
+function buildPlanBtns(){
+  const host=$('planBtns');if(!host)return;
+  _petSel=[];
+  let html=PETICIONES.map(p=>`<button class="copybtn petbtn" data-p="${p}" onclick="togglePeticion(this)">${p}</button>`).join('');
+  html+=` <span style="display:inline-flex;align-items:center;gap:4px"><button class="copybtn" onclick="addRevision()">Revisión</button><input id="revMeses" type="number" min="1" style="width:48px;padding:3px 6px" placeholder="m"></span>`;
+  host.innerHTML=html;
+}
+function togglePeticion(btn){
+  const p=btn.dataset.p;
+  const i=_petSel.indexOf(p);
+  if(i>=0){_petSel.splice(i,1);btn.classList.remove('peton')}
+  else{_petSel.push(p);btn.classList.add('peton')}
+  syncPeticiones();
+}
+function syncPeticiones(){
+  const el=$('i_plan');if(!el)return;
+  // quitar la línea previa de "Se solicita:" y reconstruirla con la selección actual
+  let lines=(el.value||'').split('\n').filter(l=>!/^[-\s]*Se solicita:/.test(l));
+  if(_petSel.length)lines.push('- Se solicita: '+_petSel.join(', '));
+  el.value=lines.filter(l=>l.trim()).join('\n');
+  genInforme();
+}
+function addRevision(){
+  const m=$('revMeses')?$('revMeses').value:'';
+  const txt=m?`Revisión en ${m} meses`:'Revisión';
+  insertTo('plan',txt);
+}
+function mkField(c,small,extraBtns){
+  const d=document.createElement('div');d.className='row';
+  d.innerHTML=`<div class="secthead"><label style="margin:0">${c[1]}</label><span class="btns">${extraBtns||''}<button class="copybtn" onclick="copyText(($('i_${c[0]}').value||'').trim(),this)">copiar</button></span></div><textarea id="i_${c[0]}" class="${small}"></textarea>`;
+  return d;
+}
+function v(id){const el=$(id);return el?(el.value||'').trim():''}
+function buildInforme(){
+  const head=tipoActual==='primera'?'INFORME DE PRIMERA VISITA - CONSULTA DE NEUROLOGÍA':'INFORME DE SEGUIMIENTO - CONSULTA DE NEUROLOGÍA';
+  let L=[head,'='.repeat(head.length)];
+  curCampos().forEach(c=>{const val=v('i_'+c[0]);if(val)L.push('\n'+c[2]+'\n'+val)});
+  return sanitizeDiraya(L.join('\n'));
+}
+function genInforme(){$('out_informe').textContent=buildInforme()}
+function limpiarInforme(){curCampos().forEach(c=>{const el=$('i_'+c[0]);if(el)el.value=''});renderCampos()}
+function insertExpl(txt){const el=$('i_expl');if(el){el.value=(el.value?el.value+'\n':'')+sanitizeDiraya(txt);genInforme();toast('Volcado a Exploración')}else toast('Abre la pestaña Informe')}
+function dashify(txt){return (txt||'').split('\n').map(l=>{l=l.trim();if(!l)return '';return l.startsWith('-')?l:'- '+l;}).filter(Boolean).join('\n');}
+function insertTo(field,txt){const el=$('i_'+field);if(el){const t=(field==='plan')?dashify(txt):txt;el.value=(el.value?el.value+'\n':'')+sanitizeDiraya(t);genInforme();toast('Volcado al informe')}else toast('Abre la pestaña Informe')}
+
+/* --- Parser de tratamiento habitual ---
+   Modo A: pegado desde Receta XXI (prescripción electrónica) -> detecta y procesa.
+   Modo B: texto libre "enalapril 10mg 1-0-0, ..." */
+const TTONORM={
+  'ACETILSALICILICO ACIDO':'AAS','ACIDO ACETILSALICILICO':'AAS',
+  'AMILORIDA CLORHIDRATO':'Amilorida','AMILORIDA':'Amilorida',
+  'VALSARTAN':'Valsartán','LOSARTAN':'Losartán','CANDESARTAN':'Candesartán','IRBESARTAN':'Irbesartán','TELMISARTAN':'Telmisartán',
+  'RAMIPRIL':'Ramipril','ENALAPRIL':'Enalapril','LISINOPRIL':'Lisinopril',
+  'ATORVASTATINA':'Atorvastatina','SIMVASTATINA':'Simvastatina','ROSUVASTATINA':'Rosuvastatina',
+  'BISOPROLOL':'Bisoprolol','METFORMINA':'Metformina','LEVOTIROXINA':'Levotiroxina','PANTOPRAZOL':'Pantoprazol',
+  'DUTASTERIDA':'Dutasterida','TAMSULOSINA':'Tamsulosina','FORMODUAL':'Formodual','OMEPRAZOL':'Omeprazol',
+  'PARACETAMOL':'Paracetamol','PROPRANOLOL':'Propranolol','PREGABALINA':'Pregabalina','PENTOXIFILINA':'Pentoxifilina','METAMIZOL':'Metamizol','DIAZEPAM':'Diazepam','DICLOFENACO':'Diclofenaco','MACROGOL':'Macrogol','ESCOPOLAMINA BUTILBROMURO':'Escopolamina','GABAPENTINA':'Gabapentina','LACOSAMIDA':'Lacosamida','LEVETIRACETAM':'Levetiracetam','TOPIRAMATO':'Topiramato','AMITRIPTILINA':'Amitriptilina','DULOXETINA':'Duloxetina',
+};
+function capFirst(s){return s.charAt(0).toUpperCase()+s.slice(1).toLowerCase()}
+function normName(n){
+  n=n.trim().replace(/\s+/g,' ');const up=n.toUpperCase();
+  if(TTONORM[up])return TTONORM[up];
+  if(/\bACIDO\b/.test(up)){const base=up.replace(/\bACIDO\b/,'').trim();return 'Ácido '+base.charAt(0)+base.slice(1).toLowerCase();}
+  return capFirst(n);
+}
+function esRecetaXXI(t){return /\|Financiado\||V[ÍI]A ORAL\)|cargar I\||Deshacer Detalle/.test(t)}
+function cleanNum(v){var n=parseFloat(String(v).replace(',','.'));if(isNaN(n))return v;return Number.isInteger(n)?String(n):String(n).replace('.',',');}
+function enemaName(frag){
+  if(/FOSFATO/i.test(frag))return 'Enema de fosfato';
+  if(/MACROGOL/i.test(frag))return 'Enema de macrogol';
+  if(/GLICERINA|GLICEROL/i.test(frag))return 'Enema de glicerina';
+  const m=frag.match(/\b(?!SODIO|POTASIO|CLORURO|FOSFATO|BICARBONATO)([A-ZÁÉÍÓÚÑ]{4,})/);
+  return 'Enema'+(m?' de '+m[1].charAt(0).toUpperCase()+m[1].slice(1).toLowerCase():'');
+}
+const ION_RX=/^(POTASIO|SODIO|CLORURO|BICARBONATO|FOSFATO|CITRATO|MAGNESIO|CALCIO|HIDROGENO)/i;
+function parseReceta(raw){
+  raw=raw.replace(/\r/g,' ');
+  const pautaRe=/\((\d+)\s*[A-ZÁÉÍÓÚ]+\s*\/\s*(\d+)\s*([hd])[^)]*?V[ÍI]A[^)]*?\)/gi;
+  let matches=[...raw.matchAll(pautaRe)];
+  if(!matches.length)return '';
+  const result=[];
+  for(let i=0;i<matches.length;i++){
+    const horas=matches[i][2];const unidad=matches[i][3].toLowerCase();
+    const ini=matches[i].index+matches[i][0].length;
+    const fin=(i+1<matches.length)?matches[i+1].index:raw.length;
+    let bloque=raw.slice(ini,fin);
+    const esEnema=/V[ÍI]A RECTAL|ENEMA/i.test(matches[i][0]+bloque);
+    let fin2=bloque.search(/\|No financiado\||\|Financiado\|/i);if(fin2===-1)fin2=bloque.length;
+    let frag=bloque.slice(0,fin2);
+    let md=frag.match(/d[ií]as\s+([\s\S]+)$/i);if(md)frag=md[1];
+    frag=frag.trim();
+    frag=frag.replace(/,\s*\d+\s*(COMPRIMIDOS?|CAPSULAS?|SOBRES?|AMPOLLAS?|VIALES?|ENEMAS?|ML).*$/i,'');
+    frag=frag.replace(/\s+1\s+(INHALADOR|ENEMA)[\s\S]*$/i,'');
+    frag=frag.replace(/\s+\d+\s+(DOSIS|UNIDADES|ML)[\s\S]*$/i,'');
+    frag=frag.replace(/\(POR ENEMA\)/i,'').replace(/\(D\.?O\.?E\.?\)/i,'');
+    frag=frag.trim();
+    if(!frag)continue;
+    let linea;
+    if(esEnema){
+      linea=enemaName(frag);
+    } else if(/^[A-ZÁÉÍÓÚÑ ]+\s+[\d.,]+\/[\d.,]+\s*MC?G/i.test(frag)){
+      const mm=frag.match(/^([A-ZÁÉÍÓÚÑ][A-ZÁÉÍÓÚÑ ]+?)\s+([\d.,]+\/[\d.,]+)\s*(MCG|MG)/i);
+      linea=mm?normName(mm[1].trim())+' '+mm[2]+' '+mm[3].toLowerCase():'[?] '+frag;
+    } else {
+      let partes=frag.split(/\s*\/\s*/);
+      if(partes.length>=3 && partes.slice(1).some(p=>ION_RX.test(p.trim()))){
+        const dm=partes[0].match(/(.+?)([\d.,]+)\s*(MG|MCG|G|UI)/i);
+        if(dm)linea=normName(dm[1].trim())+' '+cleanNum(dm[2])+' '+dm[3].toLowerCase();
+        else linea=normName(partes[0].trim());
+      } else {
+        linea=partes.map(p=>{
+          const dm=p.match(/(.+?)([\d.,]+)\s*(MG|MCG|G|UI)\b/i);
+          if(dm){let nombre=normName(dm[1].replace(/CLORHIDRATO|BROMHIDRATO|MALEATO|BESILATO|SODICO|CALCICO|HEMIFUMARATO|FUMARATO|MESILATO|SUCCINATO|BUTILBROMURO/gi,'').trim());return nombre+' '+cleanNum(dm[2])+' '+dm[3].toLowerCase();}
+          return normName(p.trim());
+        }).join(' / ');
+      }
+    }
+    const pauta=' cada '+horas+(unidad==='d'?' días':'h');
+    result.push(linea+pauta);
+  }
+  return result.join(', ');
+}
+function parseTto(){
+  const raw=($('i_ttohab').value||'').trim();if(!raw)return '';
+  if(esRecetaXXI(raw)){const r=parseReceta(raw);if(r)return r;}
+  const entradas=raw.split(/[,\n;]+/).map(x=>x.trim()).filter(Boolean);
+  return entradas.map(e=>parseLinea(e)).join(', ');
+}
+function parseLinea(e){
+  let s=e.replace(/\s+/g,' ').trim();
+  const doseRe=/(\d+(?:[.,]\d+)?)\s*(mg|g|mcg|µg|ug|ui|u|ml|%)\b/i;
+  let dose='';const dm=s.match(doseRe);
+  if(dm){dose=dm[1].replace(',','.')+' '+dm[2].toLowerCase().replace('ug','mcg').replace('µg','mcg');}
+  let pauta='';
+  const pp=s.match(/(\d+(?:[.,]\d+)?|½|media|medio)\s*-\s*(\d+(?:[.,]\d+)?|½|media|medio)\s*-\s*(\d+(?:[.,]\d+)?|½|media|medio)(?:\s*-\s*(\d+(?:[.,]\d+)?|½|media|medio))?/i);
+  if(pp){pauta=pp[0].replace(/\s*-\s*/g,'-').replace(/media|medio/gi,'½');}
+  else{const ph=s.match(/(?:cada\s*)?\/?\s*(\d+)\s*h(?:oras)?\b/i);if(ph)pauta='cada '+ph[1]+'h';}
+  const mods=[];
+  if(/si\s*precisa|s\.?p\.?\b|a demanda/i.test(s))mods.push('si precisa');
+  if(/en ayunas/i.test(s))mods.push('en ayunas');
+  if(/con\s+(?:las\s+)?comidas?/i.test(s))mods.push('con las comidas');
+  if(/noche|nocturn/i.test(s)&&!pauta)mods.push('por la noche');
+  let nombre=s.replace(doseRe,'').replace(/(\d+(?:[.,]\d+)?|½|media|medio)\s*-\s*(\d+(?:[.,]\d+)?|½|media|medio)\s*-\s*(\d+(?:[.,]\d+)?|½|media|medio)(?:\s*-\s*\S+)?/i,'').replace(/(?:cada\s*)?\/?\s*\d+\s*h(?:oras)?\b/i,'').replace(/si\s*precisa|s\.?p\.?\b|a demanda|en ayunas|con\s+(?:las\s+)?comidas?|por la noche|noche|nocturn\w*/ig,'').replace(/\s+/g,' ').trim();
+  if(!nombre)return '[?] '+e;
+  nombre=capFirst(nombre);
+  let res=nombre;if(dose)res+=' '+dose;if(pauta)res+=' '+pauta;if(mods.length)res+=' '+mods.join(', ');
+  if(!dose&&!pauta&&!mods.length)return '[?] '+capFirst(e);
+  return res;
+}
+function formatTto(){const r=parseTto();if(r){$('i_ttohab').value=r;genInforme();toast('Tratamiento formateado')}}
+
+/* ===== PLANTILLAS DE EXPLORACIÓN ===== */
+const EXPL={
+  cribado:`FFSS globalmente conservadas. No anopsias por confrontación, MOEs sin restricciones, no diplopia ni nistagmo, V sensitivomotor normal, no asimetría facial, pares bajos no alterados. Balance muscular conservado globalmente, REM simétricos. No hipoestesia apendicular distal. Marcha y equilibrios fisiológicos para la edad. No dismetría apendicular.`,
+  enrl:`- FFSS: consciente, atento/a, orientado/a, lenguaje normofluente sin elementos disfásicos, no disartria
+- PPCC: no anopsias por confrontación, PICNR, MOEs sin restricciones, no diplopia ni nistagmo, V sensitivomotor normal, no asimetría facial, pares bajos no alterados
+- MOTOR: BM 5/5 globalmente, REM ++/++++ simétricos, RCPFB
+- SENSITIVO: no hipoestesia ni hipopalestesia apendicular
+- MARCHA Y COORDINACIÓN: marcha fisiológica, tándem posible, Romberg negativo. No dismetría apendicular`,
+  cognitivo:`Consciente, atento/a, orientado/a en las tres esferas. Lenguaje normofluente sin elementos disfásicos. No disartria. Memoria 3/3. Cálculo conservado. No apraxia bimanual por imitación. Maniobras alternantes preservadas. No reflejos de liberación frontal. Movimientos oculares sin alteraciones relevantes. No signos de parkinsonismo ni piramidalismo. Marcha fisiológica para la edad.`,
+  parkinson:`FFSS globalmente conservadas. Hipomimia leve. Glabelar inagotable. Restricción en supraversión. Bradicinesia bilateral de predominio [D/I]. RRD asimétrica peor [D/I]. Temblor de reposo. Marcha con escaso braceo y anteversión de tronco. Descomposición de giros. Inestabilidad leve en pull-test. No datos de afectación piramidal ni cerebelosa.`,
+  cefalea:`Exploración neurológica normal incluyendo fondo de ojo. No sensibilización de nervios pericraneales.`,
+};
+const EXPL_TABS=[['cribado','Cribado'],['enrl','ENRL detallada'],['cognitivo','Deterioro cognitivo'],['parkinson','Parkinson'],['cefalea','Cefalea']];
+const et=$('explTabs');
+EXPL_TABS.forEach((m,i)=>{
+  const b=document.createElement('button');b.textContent=m[1];if(i===0)b.classList.add('on');
+  b.onclick=()=>{document.querySelectorAll('#explTabs button').forEach(x=>x.classList.remove('on'));b.classList.add('on');$('explOut').value=EXPL[m[0]]};
+  et.appendChild(b);
+});
+$('explOut').value=EXPL.cribado;
+
+/* ===== MONIGOTE NEUROMUSCULAR ===== */
+/* Grupos funcionales amplios, por segmento. Por defecto normal. */
+const NMGROUPS={
+  bulbar:[
+    {k:'facial',n:'Musculatura facial'},
+    {k:'masticacion',n:'Masticación'},
+    {k:'velo',n:'Velo / deglución'},
+    {k:'lengua',n:'Lengua'},
+    {k:'cuello_flex',n:'Flexores de cuello'},
+    {k:'cuello_ext',n:'Extensores de cuello'},
+  ],
+  axial:[
+    {k:'paraespinal',n:'Musculatura paraespinal'},
+    {k:'abdominal',n:'Musculatura abdominal'},
+  ],
+  msd:[
+    {k:'deltoides_d',n:'Deltoides D'},
+    {k:'biceps_d',n:'Bíceps D'},
+    {k:'triceps_d',n:'Tríceps D'},
+    {k:'extmuneca_d',n:'Extensores muñeca/dedos D'},
+    {k:'flexmuneca_d',n:'Flexores muñeca/dedos D'},
+    {k:'intrinseca_d',n:'Intrínsecos mano D'},
+  ],
+  msi:[
+    {k:'deltoides_i',n:'Deltoides I'},
+    {k:'biceps_i',n:'Bíceps I'},
+    {k:'triceps_i',n:'Tríceps I'},
+    {k:'extmuneca_i',n:'Extensores muñeca/dedos I'},
+    {k:'flexmuneca_i',n:'Flexores muñeca/dedos I'},
+    {k:'intrinseca_i',n:'Intrínsecos mano I'},
+  ],
+  mid:[
+    {k:'psoas_d',n:'Psoas D'},
+    {k:'cuadriceps_d',n:'Cuádriceps D'},
+    {k:'isquios_d',n:'Isquiotibiales D'},
+    {k:'ta_d',n:'Tibial anterior D'},
+    {k:'tricepssural_d',n:'Tríceps sural D'},
+    {k:'eph_d',n:'Ext. propio hallux D'},
+  ],
+  mii:[
+    {k:'psoas_i',n:'Psoas I'},
+    {k:'cuadriceps_i',n:'Cuádriceps I'},
+    {k:'isquios_i',n:'Isquiotibiales I'},
+    {k:'ta_i',n:'Tibial anterior I'},
+    {k:'tricepssural_i',n:'Tríceps sural I'},
+    {k:'eph_i',n:'Ext. propio hallux I'},
+  ],
+};
+const NMSEGS=[['todo','Examen completo'],['bulbar','Bulbar'],['axial','Axial'],['msd','MSD'],['msi','MSI'],['mid','MID'],['mii','MII']];
+const nmState={};   // k -> {mrc, atrof, fascic, tono, note}
+function nmDefault(){return {mrc:'5',atrof:false,fascic:false,tono:'normal',note:''}}
+let nmSeg='todo';
+
+/* SVG monigote: zonas = regiones que abren su grupo */
+function nmSVG(){
+  const reg=(id,x,y,w,h,lab)=>`<rect class="mz" data-reg="${id}" x="${x}" y="${y}" width="${w}" height="${h}" rx="6"></rect><text class="mzlab" x="${x+w/2}" y="${y+h/2+3}">${lab}</text>`;
+  return `<svg viewBox="0 0 200 360" xmlns="http://www.w3.org/2000/svg">
+    <g opacity="0.18" stroke="var(--muted)" fill="none" stroke-width="1.4">
+      <circle cx="100" cy="34" r="20"/>
+      <line x1="100" y1="54" x2="100" y2="68"/>
+      <path d="M68 70 H132 V200 H68 Z"/>
+      <line x1="68" y1="78" x2="30" y2="150"/><line x1="132" y1="78" x2="170" y2="150"/>
+      <line x1="84" y1="200" x2="74" y2="330"/><line x1="116" y1="200" x2="126" y2="330"/>
+    </g>
+    ${reg('bulbar',74,16,52,30,'Bulbar')}
+    ${reg('axial',80,86,40,90,'Axial')}
+    ${reg('msd',14,90,46,90,'MSD')}
+    ${reg('msi',140,90,46,90,'MSI')}
+    ${reg('mid',58,210,40,130,'MID')}
+    ${reg('mii',102,210,40,130,'MII')}
+  </svg>`;
+}
+function buildNM(){
+  // toggle de segmentos
+  const tg=$('nmSegToggle');tg.innerHTML='';
+  NMSEGS.forEach((s,i)=>{
+    const b=document.createElement('button');b.textContent=s[1];if(s[0]===nmSeg)b.classList.add('on');
+    b.onclick=()=>{nmSeg=s[0];buildNM()};
+    tg.appendChild(b);
+  });
+  $('nmsvg').innerHTML=nmSVG();
+  $('nmsvg').querySelectorAll('.mz').forEach(r=>{
+    r.onclick=()=>openRegion(r.dataset.reg);
+    // marcar regiones con alguna alteración
+    const regGroups=NMGROUPS[r.dataset.reg]||[];
+    const hasAb=regGroups.some(g=>{const s=nmState[g.k];return s&&(s.mrc!=='5'||s.atrof||s.fascic||s.tono!=='normal'||s.note)});
+    r.classList.toggle('ab',hasAb);
+  });
+  // si hay segmento seleccionado distinto de 'todo', abrir su detalle directamente
+  if(nmSeg!=='todo'){openRegion(nmSeg)}else{$('nmDetail').innerHTML='<p class="mini">Toca una región del monigote (o elige un segmento arriba) para explorar sus grupos.</p>'}
+}
+function ensure(k){if(!nmState[k])nmState[k]=nmDefault();return nmState[k]}
+function openRegion(reg){
+  const groups=NMGROUPS[reg];if(!groups)return;
+  const host=$('nmDetail');host.innerHTML='';
+  groups.forEach(g=>{
+    const s=ensure(g.k);
+    const d=document.createElement('div');d.className='grp';
+    d.innerHTML=`<div class="gh"><span>${g.n}</span></div>
+      <div class="controls">
+        <div><label>Fuerza (MRC)</label><select data-k="${g.k}" data-f="mrc">
+          ${['5','5-','4+','4','4-','3','2','1','0'].map(x=>`<option ${s.mrc===x?'selected':''}>${x}</option>`).join('')}
+        </select></div>
+        <div><label>Tono</label><select data-k="${g.k}" data-f="tono">
+          ${['normal','espástico','rígido','hipotónico'].map(x=>`<option ${s.tono===x?'selected':''}>${x}</option>`).join('')}
+        </select></div>
+        <div><label>Trofismo</label><select data-k="${g.k}" data-f="atrof">
+          <option value="no" ${!s.atrof?'selected':''}>normal</option>
+          <option value="si" ${s.atrof?'selected':''}>amiotrofia</option>
+        </select></div>
+        <div><label>Fasciculaciones</label><select data-k="${g.k}" data-f="fascic">
+          <option value="no" ${!s.fascic?'selected':''}>no</option>
+          <option value="si" ${s.fascic?'selected':''}>sí</option>
+        </select></div>
+        <div style="grid-column:1/-1"><label>Nota</label><input type="text" data-k="${g.k}" data-f="note" value="${(s.note||'').replace(/"/g,'&quot;')}" placeholder="comentario cualitativo"></div>
+      </div>`;
+    host.appendChild(d);
+  });
+  host.querySelectorAll('[data-k]').forEach(el=>{
+    el.oninput=el.onchange=()=>{
+      const s=ensure(el.dataset.k);const f=el.dataset.f;
+      if(f==='atrof')s.atrof=(el.value==='si');
+      else if(f==='fascic')s.fascic=(el.value==='si');
+      else s[f]=el.value;
+      buildNMmark();
+    };
+  });
+}
+function buildNMmark(){
+  $('nmsvg').querySelectorAll('.mz').forEach(r=>{
+    const regGroups=NMGROUPS[r.dataset.reg]||[];
+    const hasAb=regGroups.some(g=>{const s=nmState[g.k];return s&&(s.mrc!=='5'||s.atrof||s.fascic||s.tono!=='normal'||s.note)});
+    r.classList.toggle('ab',hasAb);
+  });
+}
+function resetNM(){Object.keys(nmState).forEach(k=>delete nmState[k]);$('nmOut').textContent='Por defecto todo normal. Toca un grupo para marcar lo patológico.';window._NM='';buildNM()}
+
+/* Generar texto compacto por regiones: solo lo patológico + resumen normal */
+function genNM(){
+  const REGNAME={bulbar:'Bulbar',axial:'Axial',msd:'MSD',msi:'MSI',mid:'MID',mii:'MII'};
+  // ¿qué regiones se exploraron? si nmSeg!=='todo', solo esa
+  const regs=(nmSeg==='todo')?Object.keys(NMGROUPS):[nmSeg];
+  let abnormal=[]; // líneas patológicas
+  let anyAb=false;
+  regs.forEach(reg=>{
+    NMGROUPS[reg].forEach(g=>{
+      const s=nmState[g.k];if(!s)return;
+      const parts=[];
+      if(s.mrc!=='5')parts.push(`${s.mrc}/5`);
+      if(s.tono!=='normal')parts.push(s.tono);
+      if(s.atrof)parts.push('amiotrofia');
+      if(s.fascic)parts.push('fasciculaciones');
+      if(s.note)parts.push(s.note);
+      if(parts.length){anyAb=true;abnormal.push(`  · ${g.n}: ${parts.join(', ')}`)}
+    });
+  });
+  let out='EXPLORACIÓN NEUROMUSCULAR';
+  if(nmSeg!=='todo')out+=` (${REGNAME[nmSeg]||nmSeg})`;
+  out+='\n';
+  if(anyAb){
+    out+='Hallazgos:\n'+abnormal.join('\n')+'\n';
+    out+='Resto de grupos explorados: BM 5/5, sin amiotrofia ni fasciculaciones, tono normal.';
+  }else{
+    out+='Balance muscular 5/5 en todos los grupos explorados. No amiotrofia ni fasciculaciones. Tono normal.';
+  }
+  out+='\nREM '+( $('nm_rem')?$('nm_rem').value:'++/++++ simétricos')+'. RCPFB.';
+  out+='\nSensibilidad: '+( $('nm_sens')?$('nm_sens').value:'no hipoestesia ni hipopalestesia apendicular')+'.';
+  window._NM=out;$('nmOut').textContent=out;
+  toast('Exploración NM generada');
+}
+buildNM();
+
+/* ===== ESCALAS ===== */
+const SCALES={};
+
+/* --- helpers --- */
+function itemScale(host,abbr,title,apartados,target,desc,editable){
+  const wrap=document.createElement('div');wrap.className='card';
+  const max=apartados.reduce((s,a)=>s+a.items.reduce((x,i)=>x+i[2],0),0);
+  wrap.innerHTML=`<h2>${title} <span style="margin-left:auto;display:flex;gap:6px"><button class="copybtn bcopy">copiar</button><button class="copybtn bvol">↑ a exploración</button></span></h2>
+   <div class="scorebar"><div><div class="mini">${abbr}</div><div class="big"><span id="${abbr}_t">0</span>/${max}</div></div><div class="fsstring" id="${abbr}_i">—</div></div>
+   ${desc?`<p class="mini">${desc}</p>`:''}`;
+  apartados.forEach((ap,ai)=>{
+    const block=document.createElement('div');block.className='grp';
+    const head=`<div class="gh"><span>${ap.ap}</span><span id="${abbr}_ap${ai}" style="font-family:var(--mono);color:var(--accent)">0</span></div>`;
+    const rows=ap.items.map((it,ii)=>{
+      const opts=[];for(let v=0;v<=it[2];v++)opts.push(`<option value="${v}">${v}</option>`);
+      let qcell;
+      if(editable){
+        const key=`${abbr}lbl_${ai}_${ii}`;
+        const saved=localStorage.getItem('ng_'+key);
+        const val=(saved!==null?saved:'').replace(/"/g,'&quot;');
+        qcell=`<div class="q"><b>${it[0]}.</b> <input type="text" class="lblinput" data-lbl="${key}" value="${val}" placeholder="${it[1]}"></div>`;
+      }else{
+        qcell=`<div class="q"><b>${it[0]}.</b> ${it[1]}</div>`;
+      }
+      return `<div class="item-q">${qcell}<select data-ap="${ai}" data-max="${it[2]}" id="${abbr}_${ai}_${ii}">${opts.join('')}</select></div>`;
+    }).join('');
+    block.innerHTML=head+rows;
+    wrap.appendChild(block);
+  });
+  host.appendChild(wrap);
+  if(editable){wrap.querySelectorAll('[data-lbl]').forEach(inp=>inp.oninput=()=>localStorage.setItem('ng_'+inp.dataset.lbl,inp.value))}
+  function calc(){
+    let total=0;const subs=[];
+    apartados.forEach((ap,ai)=>{
+      let st=0;ap.items.forEach((it,ii)=>{st+=+$(`${abbr}_${ai}_${ii}`).value||0});
+      $(`${abbr}_ap${ai}`).textContent=st;subs.push({sigla:ap.sigla,st});total+=st;
+    });
+    $(`${abbr}_t`).textContent=total;
+    return {total,subs};
+  }
+  wrap.querySelectorAll('select').forEach(s=>s.onchange=()=>{const r=calc();$(`${abbr}_i`).textContent=`(${r.subs.map(x=>x.sigla+': '+x.st).join('; ')})`});
+  function txt(){const r=calc();return `${abbr} ${r.total}/${max} (${r.subs.map(x=>x.sigla+': '+x.st).join('; ')})`}
+  wrap.querySelector('.bcopy').onclick=e=>copyText(txt(),e.target);
+  wrap.querySelector('.bvol').onclick=()=>insertTo(target||'expl',txt());
+  calc();
+}
+function sumScale(host,abbr,title,items,max,interp,extra,target,breakdown){
+  const wrap=document.createElement('div');wrap.className='card';
+  wrap.innerHTML=`<h2>${title} <span style="margin-left:auto;display:flex;gap:6px"><button class="copybtn bcopy">copiar</button><button class="copybtn bvol">↑ ${target==='jc'?'a juicio':'a exploración'}</button></span></h2>
+   <div class="scorebar"><div><div class="mini">${abbr}</div><div class="big"><span id="${abbr}_t">0</span>/${max}</div></div><div class="fsstring" id="${abbr}_i">—</div></div>`;
+  const body=document.createElement('div');
+  items.forEach((q,i)=>{const d=document.createElement('div');d.className='item-q';
+    d.innerHTML=`<div class="q"><b>${q[0]}</b>${q[1]?`<small>${q[1]}</small>`:''}</div><input type="number" min="0" max="${q[2]}" value="0" data-max="${q[2]}" id="${abbr}_${i}">`;body.appendChild(d);});
+  wrap.appendChild(body);host.appendChild(wrap);
+  function calc(){let t=0;items.forEach((q,i)=>{const el=$(`${abbr}_${i}`);let val=Math.max(0,Math.min(+el.dataset.max,+el.value||0));el.value=val;t+=val});$(`${abbr}_t`).textContent=t;$(`${abbr}_i`).textContent=interp(t)+(extra||'');return t}
+  body.addEventListener('input',calc);
+  function txt(){
+    const t=calc();
+    if(breakdown){
+      const parts=items.map((q,i)=>`${q[3]||q[0]}: ${+$(`${abbr}_${i}`).value||0}/${q[2]}`);
+      return `${abbr} ${t}/${max} (${interp(t)}). ${parts.join('; ')}`;
+    }
+    return `${abbr} ${t}/${max} — ${interp(t)}`;
+  }
+  wrap.querySelector('.bcopy').onclick=e=>copyText(txt(),e.target);
+  wrap.querySelector('.bvol').onclick=()=>insertTo(target||'expl',txt());
+  calc();
+}
+function singleScale(host,abbr,title,grades,target,desc){
+  const wrap=document.createElement('div');wrap.className='card';
+  wrap.innerHTML=`<h2>${title} <span style="margin-left:auto;display:flex;gap:6px"><button class="copybtn bcopy">copiar</button><button class="copybtn bvol">↑ ${target==='jc'?'a juicio':'a exploración'}</button></span></h2>
+   <div class="scorebar"><div class="big" id="${abbr}_v">—</div><div class="fsstring" id="${abbr}_d"></div></div>${desc?`<p class="mini">${desc}</p>`:''}`;
+  const body=document.createElement('div');
+  grades.forEach(g=>{const l=document.createElement('label');l.className='opt';
+    l.innerHTML=`<input type="radio" name="${abbr}" value="${g[0]}"><span class="lab"><b>${g[0]}</b> — ${g[1]}</span>`;
+    l.querySelector('input').onchange=()=>{$(`${abbr}_v`).textContent=g[0];$(`${abbr}_d`).textContent=g[1];window['_'+abbr]=`${title}: ${g[0]} — ${g[1]}`};
+    body.appendChild(l);});
+  wrap.appendChild(body);host.appendChild(wrap);
+  wrap.querySelector('.bcopy').onclick=e=>copyText(window['_'+abbr]||title,e.target);
+  wrap.querySelector('.bvol').onclick=()=>insertTo(target||'expl',window['_'+abbr]||title);
+}
+function singleScaleShort(host,abbr,title,grades,target,desc,shortLabel){
+  const wrap=document.createElement('div');wrap.className='card';
+  wrap.innerHTML=`<h2>${title} <span style="margin-left:auto;display:flex;gap:6px"><button class="copybtn bcopy">copiar</button><button class="copybtn bvol">↑ ${target==='jc'?'a juicio':'a exploración'}</button></span></h2>
+   <div class="scorebar"><div class="big" id="${abbr}_v">—</div><div class="fsstring" id="${abbr}_d"></div></div>${desc?`<p class="mini">${desc}</p>`:''}`;
+  const body=document.createElement('div');
+  grades.forEach(g=>{const l=document.createElement('label');l.className='opt';
+    l.innerHTML=`<input type="radio" name="${abbr}" value="${g[0]}"><span class="lab"><b>${g[0]}</b> — ${g[1]}</span>`;
+    l.querySelector('input').onchange=()=>{$(`${abbr}_v`).textContent=g[0];$(`${abbr}_d`).textContent=g[1];window['_'+abbr]=`${shortLabel} ${g[0]}`};
+    body.appendChild(l);});
+  wrap.appendChild(body);host.appendChild(wrap);
+  wrap.querySelector('.bcopy').onclick=e=>copyText(window['_'+abbr]||shortLabel,e.target);
+  wrap.querySelector('.bvol').onclick=()=>insertTo(target||'expl',window['_'+abbr]||shortLabel);
+}
+
+SCALES.MMSE={name:'MMSE',build:h=>sumScale(h,'MMSE','Mini-Mental (MMSE)',[['Orientación temporal','año/estación/fecha/día/mes',5,'OT'],['Orientación espacial','país/provincia/ciudad/lugar/planta',5,'OE'],['Fijación','3 palabras',3,'Fij'],['Atención y cálculo','restar 7 (×5) o MUNDO al revés',5,'AC'],['Memoria diferida','recordar 3 palabras',3,'MD'],['Denominación','lápiz y reloj',2,'Den'],['Repetición','«ni sí, ni no, ni peros»',1,'Rep'],['Orden 3 etapas','coger/doblar/dejar',3,'Ord'],['Lectura','«cierre los ojos»',1,'Lec'],['Escritura','frase',1,'Esc'],['Copia','pentágonos',1,'Cop']],30,t=>t>=27?'normal':t>=24?'límite/leve':t>=18?'leve-moderado':t>=10?'moderado-grave':'grave',' (ajustar por edad/escolaridad)','expl',true)};
+SCALES.MoCA={name:'MoCA',build:h=>sumScale(h,'MoCA','Montreal (MoCA)',[['Visuoespacial/ejecutiva','trail, cubo, reloj',5],['Identificación','3 animales',3],['Atención','dígitos, vigilancia, resta 7',6],['Lenguaje','repetición + fluencia',3],['Abstracción','semejanzas',2],['Recuerdo diferido','5 palabras',5],['Orientación','tiempo y lugar',6]],30,t=>t>=26?'normal':'posible deterioro cognitivo','. +1 si escolaridad ≤12 años','expl')};
+SCALES.TAM={name:'T@M',build:h=>itemScale(h,'TAM','Test de Alteración de Memoria (T@M)',
+  [
+    {ap:'Memoria inmediata (codificación)',sigla:'MI',items:[
+      ['1','palabra 1',1],['2','palabra 2',1],['3','palabra 3',1],['4','palabra 4',1],['5','palabra 5',1],
+      ['6','frase 1 - dato a',1],['7','frase 1 - dato b',1],['8','frase 1 - dato c',1],
+      ['9','frase 2 - dato a',1],['10','frase 2 - dato b',1],
+    ]},
+    {ap:'Orientación temporal',sigla:'OT',items:[
+      ['11','día de la semana',1],['12','mes',1],['13','día del mes',1],['14','año',1],['15','estación',1],
+    ]},
+    {ap:'Memoria semántica (remota)',sigla:'MS',items:[
+      ['16','pregunta 16',1],['17','pregunta 17',1],['18','pregunta 18',1],['19','pregunta 19',1],['20','pregunta 20',1],
+      ['21','pregunta 21',1],['22','pregunta 22',1],['23','pregunta 23',1],['24','pregunta 24',1],['25','pregunta 25',1],
+      ['26','pregunta 26',1],['27','pregunta 27',1],['28','pregunta 28',1],['29','pregunta 29',1],['30','pregunta 30',1],
+    ]},
+    {ap:'Evocación libre',sigla:'EL',items:[
+      ['31','palabras recordadas (0-5)',5],['32','frase 1 (0-3)',3],['33','frase 2 (0-2)',2],
+    ]},
+    {ap:'Evocación con pistas (facilitada)',sigla:'EP',items:[
+      ['34','pista palabra 1',1],['35','pista palabra 2',1],['36','pista palabra 3',1],['37','pista palabra 4',1],['38','pista palabra 5',1],
+      ['39','frase 1 - dato a',1],['40','frase 1 - dato b',1],['41','frase 1 - dato c',1],
+      ['42','frase 2 - dato a',1],['43','frase 2 - dato b',1],
+    ]},
+  ],
+  'expl',
+  'Escribe el enunciado de cada ítem una vez (desde tu copia del test) en los campos; se guardan en este navegador. Total 50. Cortes orientativos para el clínico: 37 (DCL amnésico) y 31 (Alzheimer); no se vuelcan.',
+  true)};
+
+SCALES.FAB={name:'FAB',build:h=>itemScale(h,'FAB','Frontal Assessment Battery (FAB)',
+  [
+    {ap:'Conceptualización (semejanzas)',sigla:'Concep',items:[['1','0 ninguna · 1 una · 2 dos · 3 tres categorías correctas (plátano-naranja, mesa-silla, tulipán-rosa)',3]]},
+    {ap:'Flexibilidad mental (fluencia léxica)',sigla:'Flex',items:[['2','Palabras con «S» en 60 s: 0 (<3) · 1 (3-5) · 2 (6-9) · 3 (≥10)',3]]},
+    {ap:'Programación motora (serie de Luria puño-canto-palma)',sigla:'ProgMot',items:[['3','0 no puede · 1 con el examinador · 2 ≥3 seguidas solo · 3 ≥6 seguidas solo',3]]},
+    {ap:'Instrucciones conflictivas',sigla:'InstrConf',items:[['4','«Golpee 2 veces cuando yo golpee 1» y «golpee 1 vez cuando yo golpee 2». Serie: 1-1-2-1-2-2-2-1-1-2. → 0 igual que el examinador ≥4 veces seguidas · 1 ≥3 errores · 2 1-2 errores · 3 sin error',3]]},
+    {ap:'Control inhibitorio (go/no-go)',sigla:'Inhib',items:[['5','«Golpee 1 vez cuando yo golpee 1» y «no golpee cuando yo golpee 2». Serie: 1-1-2-1-2-2-2-1-1-2. → 0 golpea igual que el examinador ≥4 veces seguidas · 1 ≥3 errores · 2 1-2 errores · 3 sin error',3]]},
+    {ap:'Autonomía / prensión',sigla:'Prens',items:[['6','0 coge ambas manos · 1 duda/pregunta · 2 coge tras decir no · 3 no coge',3]]},
+  ],
+  'expl',
+  'Total 18. Corte habitual ≤12 sugiere disfunción frontal — para el clínico, no se vuelca.')};
+SCALES.HoehnYahr={name:'Hoehn-Yahr',build:h=>singleScale(h,'HY','Hoehn y Yahr',[['1','Afectación unilateral'],['1.5','Unilateral + axial'],['2','Bilateral, sin alteración del equilibrio'],['2.5','Bilateral leve, recupera en pull-test'],['3','Bilateral con inestabilidad postural, independiente'],['4','Discapacidad grave, aún camina/se mantiene sin ayuda'],['5','En silla o cama si no recibe ayuda']],'jc','Estadio de Hoehn y Yahr (modificado).')};
+SCALES.mRS={name:'mRS',build:h=>singleScale(h,'mRS','Rankin modificada (mRS)',[['0','Sin síntomas'],['1','Sin discapacidad significativa pese a síntomas'],['2','Discapacidad leve: independiente para sus actividades'],['3','Discapacidad moderada: requiere algo de ayuda, camina solo'],['4','Discapacidad moderada-grave: no camina ni se atiende sin ayuda'],['5','Discapacidad grave: encamado, incontinente, cuidados constantes'],['6','Fallecido']],'expl','Escala de Rankin modificada.')};
+SCALES.Osserman={name:'Osserman (MG)',build:h=>singleScale(h,'OSS','Osserman (miastenia gravis)',[['I','Ocular pura'],['IIa','Generalizada leve, sin afectación bulbar significativa'],['IIb','Generalizada moderada, con afectación bulbar'],['III','Aguda fulminante, con afectación respiratoria'],['IV','Grave tardía (progresión desde formas previas)']],'jc','Clasificación clínica de Osserman.')};
+
+/* --- MIDAS detallada --- */
+SCALES.MIDAS={name:'MIDAS',build:host=>{
+  const items=[
+    ['1. Días de trabajo/estudio perdidos','Días en los últimos 3 meses que faltó al trabajo o a clase por cefalea',90],
+    ['2. Días con rendimiento ≥50% reducido (trabajo/estudio)','Días en que acudió pero el rendimiento se redujo a la mitad o más (no contar los del ítem 1)',90],
+    ['3. Días sin tareas del hogar','Días que no pudo hacer las tareas domésticas por cefalea',90],
+    ['4. Días con rendimiento ≥50% reducido (hogar)','Días con tareas del hogar a medio rendimiento (no contar los del ítem 3)',90],
+    ['5. Días sin actividades sociales/familiares/ocio','Días que perdió actividades familiares, sociales o de ocio',90],
+  ];
+  sumScale(host,'MIDAS','MIDAS (discapacidad por migraña)',items,450,t=>t<=5?'Grado I — discapacidad mínima o nula':t<=10?'Grado II — discapacidad leve':t<=20?'Grado III — discapacidad moderada':'Grado IV — discapacidad grave','. Referido a los ÚLTIMOS 3 MESES','expl');
+}};
+
+/* --- NIHSS detallada con output formato hospital --- */
+SCALES.NIHSS={name:'NIHSS',build:host=>{
+  const ITEMS=[
+    ['1a Nivel de consciencia','0 alerta · 1 somnoliento, responde a estímulos menores · 2 obnubilado, requiere estimulación repetida · 3 coma/respuestas reflejas',3],
+    ['1b Preguntas (mes y edad)','0 ambas correctas · 1 una correcta · 2 ninguna correcta',2],
+    ['1c Órdenes (abrir/cerrar ojos, abrir/cerrar mano)','0 ambas correctas · 1 una correcta · 2 ninguna',2],
+    ['2 Mirada','0 normal · 1 paresia parcial de la mirada · 2 desviación forzada',2],
+    ['3 Campos visuales','0 sin déficit · 1 hemianopsia parcial · 2 hemianopsia completa · 3 hemianopsia bilateral/ceguera',3],
+    ['4 Paresia facial','0 normal · 1 paresia menor (borra surco nasogeniano) · 2 parálisis parcial (inferior) · 3 parálisis completa',3],
+    ['5a Motor brazo derecho','0 no claudica (10 s) · 1 claudica sin tocar cama · 2 esfuerzo contra gravedad · 3 no vence gravedad · 4 no movimiento (9 si amputación)',4],
+    ['5b Motor brazo izquierdo','0 no claudica · 1 claudica · 2 esfuerzo contra gravedad · 3 no vence gravedad · 4 no movimiento',4],
+    ['6a Motor pierna derecha','0 no claudica (5 s) · 1 claudica · 2 esfuerzo contra gravedad · 3 no vence gravedad · 4 no movimiento',4],
+    ['6b Motor pierna izquierda','0 no claudica · 1 claudica · 2 esfuerzo contra gravedad · 3 no vence gravedad · 4 no movimiento',4],
+    ['7 Ataxia de miembros','0 ausente · 1 en una extremidad · 2 en dos extremidades',2],
+    ['8 Sensibilidad','0 normal · 1 hipoestesia leve-moderada · 2 hipoestesia grave/anestesia',2],
+    ['9 Lenguaje','0 normal · 1 afasia leve-moderada · 2 afasia grave · 3 mutismo/afasia global',3],
+    ['10 Disartria','0 normal · 1 leve-moderada · 2 grave/anartria',2],
+    ['11 Extinción/inatención','0 normal · 1 inatención en una modalidad · 2 inatención grave/hemi-inatención',2],
+  ];
+  const wrap=document.createElement('div');wrap.className='card';
+  wrap.innerHTML=`<h2>NIHSS <span style="margin-left:auto;display:flex;gap:6px"><button class="copybtn bcopy">copiar</button><button class="copybtn bvol">↑ a exploración</button></span></h2>
+   <div class="scorebar"><div><div class="mini">NIHSS total</div><div class="big" id="NIH_t">0</div></div><div class="fsstring" id="NIH_i">—</div></div>`;
+  const body=document.createElement('div');
+  ITEMS.forEach((q,i)=>{const d=document.createElement('div');d.className='item-q';
+    d.innerHTML=`<div class="q"><b>${q[0]}</b><small>${q[1]}</small></div><input type="number" min="0" max="${q[2]}" value="0" data-max="${q[2]}" id="NIH_${i}">`;body.appendChild(d);});
+  wrap.appendChild(body);host.appendChild(wrap);
+  function calc(){let t=0;ITEMS.forEach((q,i)=>{const el=$('NIH_'+i);let val=Math.max(0,Math.min(+el.dataset.max,+el.value||0));el.value=val;t+=val});$('NIH_t').textContent=t;
+    $('NIH_i').textContent=t===0?'sin déficit':t<=4?'leve':t<=15?'moderado':t<=20?'moderado-grave':'grave';return t}
+  body.addEventListener('input',calc);
+  // Output formato hospital: tres líneas de 5 ítems con sumas, total al final
+  function fmtHosp(){
+    const g=i=>(+$('NIH_'+i).value||0);
+    const l1=[g(0),g(1),g(2),g(3),g(4)];      // 1a,1b,1c,2,3
+    const l2=[g(5),g(6),g(7),g(8),g(9)];      // 4,5a,5b,6a,6b
+    const l3=[g(10),g(11),g(12),g(13),g(14)]; // 7,8,9,10,11
+    const total=calc();
+    return `NIHSS\n${l1.join('+')}\n${l2.join('+')} = ${total}\n${l3.join('+')}`;
+  }
+  wrap.querySelector('.bcopy').onclick=e=>copyText(fmtHosp(),e.target);
+  wrap.querySelector('.bvol').onclick=()=>insertTo('expl',fmtHosp());
+  calc();
+}};
+
+/* --- GDS (Reisberg) a juicio clínico --- */
+SCALES.GDS={name:'GDS (demencia)',build:h=>singleScaleShort(h,'GDS','GDS de Reisberg',[
+  ['1','Normal: sin déficit cognitivo ni quejas'],
+  ['2','Déficit muy leve: olvidos subjetivos, sin hallazgos objetivos'],
+  ['3','Déficit leve: primeros déficits objetivos, afecta a tareas complejas'],
+  ['4','Déficit moderado (demencia leve): dificultad en finanzas, tareas complejas'],
+  ['5','Déficit moderado-grave (demencia moderada): precisa ayuda para elegir ropa, etc.'],
+  ['6','Déficit grave (demencia moderada-grave): ayuda para vestido/higiene, incontinencia'],
+  ['7','Déficit muy grave (demencia grave): pérdida del lenguaje, dependencia total'],
+],'jc','Escala de deterioro global de Reisberg. Al volcar inserta solo «GDS X» en el juicio clínico; la descripción queda aquí, para ti.','GDS')};
+
+const SCALE_ORDER=['MMSE','MoCA','TAM','FAB','HoehnYahr','mRS','Osserman','MIDAS','NIHSS','GDS'];
+const sct=$('scaleTabs'),sch=$('scaleHost');
+SCALE_ORDER.forEach((key,i)=>{
+  const b=document.createElement('button');b.textContent=SCALES[key].name;if(i===0)b.classList.add('on');
+  b.onclick=()=>{document.querySelectorAll('#scaleTabs button').forEach(x=>x.classList.remove('on'));b.classList.add('on');sch.innerHTML='';SCALES[key].build(sch)};
+  sct.appendChild(b);
+});
+SCALES.MMSE.build(sch);
+
+/* ===== TRATAMIENTOS (alfabético; cada fármaco con todas sus indicaciones) ===== */
+function planBox(id,def){const s=localStorage.getItem('ng_'+id);const val=(s!==null?s:def);return `<textarea class="planbox" data-plan="${id}">${val.replace(/</g,'&lt;')}</textarea>`}
+function bindPlans(sc){sc.querySelectorAll('[data-plan]').forEach(t=>t.oninput=()=>localStorage.setItem('ng_'+t.dataset.plan,t.value))}
+function resetPlans(){if(confirm('¿Restaurar todos los planes por defecto y borrar tus ediciones?')){Object.keys(localStorage).filter(k=>k.startsWith('ng_')).forEach(k=>localStorage.removeItem(k));renderTrat()}}
+
+/* Cada fármaco: nombre (principio activo), lista de indicaciones {ind, plan} */
+const FARMACOS=[
+ {n:'ACETAZOLAMIDA',inds:[
+   {ind:'Hipertensión intracraneal idiopática',plan:`ACETAZOLAMIDA: iniciar 250 mg cada 12 horas; subir progresivamente según respuesta y tolerancia hasta 1-2 g al día repartidos.`},
+   {ind:'Vértigo/ataxia episódica, migraña vestibular (seleccionados)',plan:`ACETAZOLAMIDA 250 mg al día, ajustar según respuesta.`},
+ ]},
+ {n:'AMANTADINA',inds:[
+   {ind:'Discinesias en enfermedad de Parkinson',plan:`AMANTADINA: 100 mg por la mañana; puede añadirse una segunda toma a mediodía. Evitar la toma nocturna porque puede causar insomnio.`},
+   {ind:'Fatiga',plan:`AMANTADINA 100 mg por la mañana, con posible segunda toma a mediodía.`},
+ ]},
+ {n:'AMITRIPTILINA',inds:[
+   {ind:'Migraña (preventivo)',plan:`AMITRIPTILINA: iniciar 10 mg por la noche; subir 10 mg cada 1-2 semanas hasta 25-50 mg por la noche. Puede tardar 3-4 semanas en hacer efecto.`},
+   {ind:'Dolor neuropático',plan:`AMITRIPTILINA: iniciar 10-25 mg por la noche; subir según tolerancia hasta 25-75 mg por la noche. Puede tardar 3-4 semanas en hacer efecto.`},
+   {ind:'Cefalea tensional (preventivo)',plan:`AMITRIPTILINA: iniciar 10 mg por la noche; subir progresivamente hasta 10-50 mg por la noche.`},
+ ]},
+ {n:'APOMORFINA',inds:[
+   {ind:'Enfermedad de Parkinson (fluctuaciones, rescate)',plan:`APOMORFINA subcutánea: pluma de rescate en periodos OFF, dosis individualizada (habitual 2-6 mg por inyección) según prueba de dosis. Existe infusión subcutánea continua para fluctuaciones graves.`},
+ ]},
+ {n:'ATOGEPANT',inds:[
+   {ind:'Migraña (preventivo)',plan:`ATOGEPANT 60 mg vía oral una vez al día.`},
+ ]},
+ {n:'BACLOFENO',inds:[
+   {ind:'Espasticidad',plan:`BACLOFENO: iniciar 5 mg cada 8 horas; subir 5 mg por toma cada 3 días según respuesta. Rango habitual 30-60 mg al día.`},
+ ]},
+ {n:'BETAHISTINA',inds:[
+   {ind:'Vértigo / enfermedad de Ménière',plan:`BETAHISTINA 16 mg cada 8 horas, o 24 mg cada 12 horas, con las comidas.`},
+ ]},
+ {n:'BIPERIDENO',inds:[
+   {ind:'Distonía / parkinsonismo (temblor)',plan:`BIPERIDENO: iniciar 1 mg cada 12 horas; subir según respuesta y tolerancia hasta 2 mg cada 8 horas.`},
+   {ind:'Distonía aguda por neurolépticos',plan:`BIPERIDENO 5 mg intramuscular o intravenoso; puede repetirse a los 30 minutos si precisa.`},
+ ]},
+ {n:'BRIVARACETAM',inds:[
+   {ind:'Epilepsia focal',plan:`BRIVARACETAM: iniciar 50 mg cada 12 horas; ajustar según respuesta entre 25 y 100 mg cada 12 horas.`},
+ ]},
+ {n:'CANDESARTÁN',inds:[
+   {ind:'Migraña (preventivo)',plan:`CANDESARTÁN: iniciar 8 mg al día; subir a 16 mg al día según tolerancia y tensión arterial.`},
+ ]},
+ {n:'CARBAMAZEPINA',inds:[
+   {ind:'Neuralgia del trigémino',plan:`CARBAMAZEPINA: iniciar 100 mg cada 12 horas; subir 100-200 mg cada 1-2 días hasta control del dolor. Rango habitual 600-1200 mg al día repartidos.`},
+   {ind:'Epilepsia focal',plan:`CARBAMAZEPINA (liberación prolongada): iniciar 200 mg cada 12 horas; subir según respuesta hasta 800-1200 mg al día repartidos.`},
+ ]},
+ {n:'CENOBAMATO',inds:[
+   {ind:'Epilepsia focal farmacorresistente (adyuvante)',plan:`CENOBAMATO: iniciar 12,5 mg al día con titulación lenta quincenal hasta 200 mg al día (rango 100-400 mg al día). Titulación lenta para reducir el riesgo de reacciones cutáneas graves.`},
+ ]},
+ {n:'CLOBAZAM',inds:[
+   {ind:'Epilepsia (adyuvante)',plan:`CLOBAZAM: iniciar 5-10 mg por la noche; subir según respuesta hasta 10-20 mg al día.`},
+ ]},
+ {n:'CLONAZEPAM',inds:[
+   {ind:'Temblor / mioclonías',plan:`CLONAZEPAM: iniciar 0,5 mg por la noche; ajustar según respuesta hasta 0,5-2 mg al día.`},
+   {ind:'Trastorno de conducta del sueño REM',plan:`CLONAZEPAM 0,5 mg por la noche (puede subirse a 1-2 mg si precisa).`},
+ ]},
+ {n:'CLOZAPINA',inds:[
+   {ind:'Psicosis en enfermedad de Parkinson',plan:`CLOZAPINA: iniciar 6,25-12,5 mg por la noche; subir muy lentamente según respuesta (habitual 25-50 mg al día). Control hematológico obligatorio por riesgo de agranulocitosis.`},
+ ]},
+ {n:'DEXKETOPROFENO',inds:[
+   {ind:'Crisis de migraña / dolor agudo',plan:`DEXKETOPROFENO 25 mg cada 8 horas si dolor, con las comidas. Máximo 75 mg al día, uso corto.`},
+ ]},
+ {n:'DOMPERIDONA',inds:[
+   {ind:'Náuseas/vómitos en crisis de migraña',plan:`DOMPERIDONA 10 mg hasta cada 8 horas si náuseas, antes de las comidas. Uso lo más corto posible.`},
+ ]},
+ {n:'DONEPEZILO',inds:[
+   {ind:'Enfermedad de Alzheimer (leve-moderada-grave)',plan:`DONEPEZILO 5 mg por la noche durante 4 semanas; después 10 mg por la noche. Existe presentación de 23 mg para fases avanzadas.`},
+   {ind:'Demencia por cuerpos de Lewy / Parkinson-demencia',plan:`DONEPEZILO 5 mg por la noche, subir a 10 mg por la noche tras 4 semanas.`},
+ ]},
+ {n:'DULOXETINA',inds:[
+   {ind:'Dolor neuropático',plan:`DULOXETINA 30 mg al día durante 1 semana, luego 60 mg al día. Puede tardar 3-4 semanas en hacer efecto.`},
+   {ind:'Migraña/cefalea con comorbilidad ansioso-depresiva',plan:`DULOXETINA 30 mg al día, subir a 60 mg al día según respuesta.`},
+ ]},
+ {n:'ENTACAPONA',inds:[
+   {ind:'Enfermedad de Parkinson (con levodopa, fluctuaciones)',plan:`ENTACAPONA 200 mg con cada toma de levodopa (máximo 10 tomas al día). Existe combinación fija levodopa/carbidopa/entacapona.`},
+ ]},
+ {n:'EPTINEZUMAB',inds:[
+   {ind:'Migraña (preventivo, anti-CGRP)',plan:`EPTINEZUMAB 100 mg intravenoso cada 3 meses (puede usarse 300 mg).`},
+ ]},
+ {n:'ERENUMAB',inds:[
+   {ind:'Migraña (preventivo, anti-CGRP)',plan:`ERENUMAB 70 mg subcutáneo una vez al mes; puede aumentarse a 140 mg al mes según respuesta. Autoinyección domiciliaria.`},
+ ]},
+ {n:'ESLICARBAZEPINA',inds:[
+   {ind:'Epilepsia focal',plan:`ESLICARBAZEPINA: iniciar 400 mg al día; subir a 800 mg al día tras 1-2 semanas; máximo 1200 mg al día, en toma única.`},
+   {ind:'Neuralgia del trigémino',plan:`ESLICARBAZEPINA: iniciar 400 mg al día; subir hasta 800-1200 mg al día en toma única según respuesta.`},
+ ]},
+ {n:'ETOSUXIMIDA',inds:[
+   {ind:'Epilepsia con ausencias',plan:`ETOSUXIMIDA: iniciar 250 mg al día; subir según respuesta hasta 500-1500 mg al día repartidos.`},
+ ]},
+ {n:'FENITOÍNA',inds:[
+   {ind:'Epilepsia focal/generalizada',plan:`FENITOÍNA: 100 mg cada 8 horas vía oral; ajustar según niveles plasmáticos y respuesta.`},
+ ]},
+ {n:'FLUNARIZINA',inds:[
+   {ind:'Migraña (preventivo)',plan:`FLUNARIZINA 5 mg por la noche (puede usarse 10 mg). Uso limitado en el tiempo; reevaluar a los 2-3 meses.`},
+ ]},
+ {n:'FREMANEZUMAB',inds:[
+   {ind:'Migraña (preventivo, anti-CGRP)',plan:`FREMANEZUMAB 225 mg subcutáneo una vez al mes, o 675 mg (3 inyecciones) cada 3 meses. Autoinyección domiciliaria.`},
+ ]},
+ {n:'GABAPENTINA',inds:[
+   {ind:'Dolor neuropático',plan:`GABAPENTINA: 300 mg por la noche los días 1-3 → 300 mg cada 12 horas los días 4-6 → 300 mg cada 8 horas desde el día 7. Subir 300 mg cada 3-7 días según respuesta hasta 900-1800 mg al día (máximo 3600 mg al día).`},
+   {ind:'Epilepsia focal (adyuvante)',plan:`GABAPENTINA: 300 mg día 1 → 300 mg/12h día 2 → 300 mg/8h día 3; subir según respuesta hasta 900-3600 mg al día repartidos.`},
+ ]},
+ {n:'GALANTAMINA',inds:[
+   {ind:'Enfermedad de Alzheimer (leve-moderada)',plan:`GALANTAMINA (liberación prolongada): 8 mg al día por la mañana durante 4 semanas; subir a 16 mg al día durante al menos 4 semanas; mantenimiento 16-24 mg al día.`},
+ ]},
+ {n:'GALCANEZUMAB',inds:[
+   {ind:'Migraña (preventivo, anti-CGRP)',plan:`GALCANEZUMAB: dosis de carga 240 mg subcutáneo (dos inyecciones de 120 mg), después 120 mg subcutáneo una vez al mes. Autoinyección domiciliaria.`},
+   {ind:'Cefalea en racimos episódica',plan:`GALCANEZUMAB 300 mg subcutáneo (tres inyecciones de 100 mg) al inicio del racimo, mensual durante el episodio.`},
+ ]},
+ {n:'INDOMETACINA',inds:[
+   {ind:'Cefaleas indometacín-sensibles (hemicránea paroxística, continua)',plan:`INDOMETACINA: iniciar 25 mg cada 8 horas; subir hasta 50 mg cada 8 horas si precisa. Asociar protección gástrica.`},
+ ]},
+ {n:'LACOSAMIDA',inds:[
+   {ind:'Epilepsia focal',plan:`LACOSAMIDA: iniciar 50 mg cada 12 horas; subir 50 mg/12h cada semana hasta 100-200 mg cada 12 horas.`},
+   {ind:'Neuralgia / dolor neuropático refractario',plan:`LACOSAMIDA: iniciar 50 mg cada 12 horas; titular según respuesta hasta 100-200 mg cada 12 horas.`},
+ ]},
+ {n:'LAMOTRIGINA',inds:[
+   {ind:'Epilepsia (focal y generalizada)',plan:`LAMOTRIGINA (monoterapia): 25 mg al día semanas 1-2 → 50 mg al día semanas 3-4 → subir 50-100 mg cada 1-2 semanas hasta 100-200 mg al día. Titulación lenta para reducir el riesgo de exantema.`},
+ ]},
+ {n:'LASMIDITÁN',inds:[
+   {ind:'Migraña (tratamiento agudo)',plan:`LASMIDITÁN 100 mg al inicio de la crisis (puede usarse 50 o 200 mg); máximo 1 dosis al día. No conducir ni manejar maquinaria en las 8 horas siguientes.`},
+ ]},
+ {n:'LEVETIRACETAM',inds:[
+   {ind:'Epilepsia (focal y generalizada)',plan:`LEVETIRACETAM: iniciar 500 mg cada 12 horas; subir según respuesta hasta 1000-1500 mg cada 12 horas.`},
+   {ind:'Profilaxis de crisis (corto plazo)',plan:`LEVETIRACETAM 500 mg cada 12 horas.`},
+ ]},
+ {n:'LEVODOPA/CARBIDOPA',inds:[
+   {ind:'Enfermedad de Parkinson (inicio)',plan:`LEVODOPA/CARBIDOPA: iniciar medio o un comprimido de 100/25 mg con el desayuno; subir progresivamente hasta 100/25 mg tres veces al día según respuesta. Tomar 30-60 minutos antes de las comidas.`},
+   {ind:'Síndrome de piernas inquietas (intermitente)',plan:`LEVODOPA/CARBIDOPA 100/25 mg antes de acostarse de forma puntual (no a diario por riesgo de aumento de síntomas).`},
+ ]},
+ {n:'MELATONINA',inds:[
+   {ind:'Insomnio de conciliación / trastorno del ritmo',plan:`MELATONINA 2 mg de liberación prolongada 1-2 horas antes de acostarse.`},
+   {ind:'Trastorno de conducta del sueño REM',plan:`MELATONINA 2-4 mg por la noche (puede subirse según respuesta).`},
+ ]},
+ {n:'MEMANTINA',inds:[
+   {ind:'Enfermedad de Alzheimer (moderada-grave)',plan:`MEMANTINA: 5 mg al día semana 1 → 10 mg al día semana 2 → 15 mg al día semana 3 → 20 mg al día desde la semana 4 (puede repartirse o en toma única).`},
+ ]},
+ {n:'METOCLOPRAMIDA',inds:[
+   {ind:'Náuseas/vómitos en crisis de migraña',plan:`METOCLOPRAMIDA 10 mg hasta cada 8 horas si náuseas. Uso corto por riesgo de efectos extrapiramidales.`},
+ ]},
+ {n:'NAPROXENO',inds:[
+   {ind:'Migraña (crisis) y preventivo en migraña menstrual',plan:`NAPROXENO 500 mg cada 12 horas si dolor (crisis). En migraña menstrual, 550 mg cada 12 horas los días peri-menstruales.`},
+ ]},
+ {n:'NARATRIPTÁN',inds:[
+   {ind:'Migraña (tratamiento agudo)',plan:`NARATRIPTÁN 2,5 mg al inicio de la crisis; puede repetirse a las 4 horas si reaparece (máximo 5 mg al día). Acción más lenta y prolongada.`},
+ ]},
+ {n:'NIMODIPINO',inds:[
+   {ind:'Prevención del vasoespasmo en hemorragia subaracnoidea',plan:`NIMODIPINO 60 mg cada 4 horas vía oral durante 21 días.`},
+ ]},
+ {n:'NORTRIPTILINA',inds:[
+   {ind:'Dolor neuropático / cefalea (preventivo)',plan:`NORTRIPTILINA: iniciar 10-25 mg por la noche; subir según tolerancia hasta 25-75 mg por la noche.`},
+ ]},
+ {n:'ONABOTULINUMTOXINA A',inds:[
+   {ind:'Migraña crónica',plan:`ONABOTULINUMTOXINA A: 155-195 unidades en infiltraciones pericraneales/cervicales según protocolo PREEMPT, cada 12 semanas.`},
+ ]},
+ {n:'OPICAPONA',inds:[
+   {ind:'Enfermedad de Parkinson (con levodopa, fluctuaciones)',plan:`OPICAPONA 50 mg una vez al día al acostarse, separada al menos 1 hora de la levodopa.`},
+ ]},
+ {n:'OXCARBAZEPINA',inds:[
+   {ind:'Epilepsia focal',plan:`OXCARBAZEPINA: iniciar 300 mg cada 12 horas; subir según respuesta hasta 600-1200 mg cada 12 horas.`},
+   {ind:'Neuralgia del trigémino',plan:`OXCARBAZEPINA: iniciar 300 mg cada 12 horas; titular hasta control del dolor.`},
+ ]},
+ {n:'PERAMPANEL',inds:[
+   {ind:'Epilepsia (focal y generalizada)',plan:`PERAMPANEL: iniciar 2 mg por la noche; subir 2 mg cada 1-2 semanas hasta 4-8 mg por la noche.`},
+ ]},
+ {n:'PIRIDOSTIGMINA',inds:[
+   {ind:'Miastenia gravis',plan:`PIRIDOSTIGMINA: iniciar 60 mg cada 8 horas; ajustar según respuesta clínica (rango habitual 60 mg cada 4-6 horas en vigilia).`},
+ ]},
+ {n:'PITOLISANT',inds:[
+   {ind:'Narcolepsia (somnolencia diurna, cataplejía)',plan:`PITOLISANT: iniciar 9 mg por la mañana; ajustar según respuesta hasta 18-36 mg al día.`},
+ ]},
+ {n:'PRAMIPEXOL',inds:[
+   {ind:'Enfermedad de Parkinson',plan:`PRAMIPEXOL (liberación prolongada): iniciar 0,26 mg al día; subir progresivamente según respuesta hasta 1,05-3,15 mg al día.`},
+   {ind:'Síndrome de piernas inquietas',plan:`PRAMIPEXOL 0,088-0,18 mg 2-3 horas antes de acostarse; subir según respuesta a dosis bajas.`},
+ ]},
+ {n:'PREGABALINA',inds:[
+   {ind:'Dolor neuropático',plan:`PREGABALINA: iniciar 75 mg cada 12 horas; subir según respuesta y tolerancia hasta 150-300 mg cada 12 horas.`},
+   {ind:'Epilepsia focal (adyuvante)',plan:`PREGABALINA: iniciar 75 mg cada 12 horas; titular hasta 300 mg cada 12 horas.`},
+ ]},
+ {n:'PROPRANOLOL',inds:[
+   {ind:'Migraña (preventivo)',plan:`PROPRANOLOL: iniciar 20-40 mg cada 12 horas; subir hasta 80-160 mg al día (existe formulación retard de toma única).`},
+   {ind:'Temblor esencial',plan:`PROPRANOLOL: iniciar 10-40 mg cada 8-12 horas; subir según respuesta hasta 120-320 mg al día.`},
+ ]},
+ {n:'QUETIAPINA',inds:[
+   {ind:'Psicosis en enfermedad de Parkinson',plan:`QUETIAPINA: iniciar 12,5-25 mg por la noche; subir lentamente según respuesta (habitual 25-75 mg al día).`},
+ ]},
+ {n:'RASAGILINA',inds:[
+   {ind:'Enfermedad de Parkinson',plan:`RASAGILINA 1 mg vía oral una vez al día.`},
+ ]},
+ {n:'RILUZOL',inds:[
+   {ind:'Esclerosis lateral amiotrófica',plan:`RILUZOL 50 mg cada 12 horas vía oral.`},
+ ]},
+ {n:'RIMEGEPANT',inds:[
+   {ind:'Migraña (tratamiento agudo)',plan:`RIMEGEPANT 75 mg (liofilizado oral) al inicio de la crisis, según necesidad; máximo 1 dosis al día.`},
+   {ind:'Migraña (preventivo)',plan:`RIMEGEPANT 75 mg (liofilizado oral) un día sí y otro no (cada 48 horas).`},
+ ]},
+ {n:'RIVASTIGMINA',inds:[
+   {ind:'Enfermedad de Alzheimer (leve-moderada)',plan:`RIVASTIGMINA en parche transdérmico: 4,6 mg/24 h durante 4 semanas; subir a 9,5 mg/24 h (dosis de mantenimiento habitual); puede subirse a 13,3 mg/24 h. Aplicar en piel limpia y rotar la zona.`},
+   {ind:'Demencia asociada a enfermedad de Parkinson',plan:`RIVASTIGMINA parche 4,6 mg/24 h → 9,5 mg/24 h tras 4 semanas.`},
+ ]},
+ {n:'RIZATRIPTÁN',inds:[
+   {ind:'Migraña (tratamiento agudo)',plan:`RIZATRIPTÁN 10 mg al inicio de la crisis; puede repetirse a las 2 horas si reaparece (máximo 20 mg al día).`},
+ ]},
+ {n:'ROPINIROL',inds:[
+   {ind:'Enfermedad de Parkinson',plan:`ROPINIROL (liberación prolongada): iniciar 2 mg al día 1 semana; subir 2 mg/semana según respuesta hasta 8 mg al día (máximo 24 mg).`},
+   {ind:'Síndrome de piernas inquietas',plan:`ROPINIROL 0,25-0,5 mg 1-3 horas antes de acostarse; subir según respuesta (dosis bajas).`},
+ ]},
+ {n:'ROTIGOTINA',inds:[
+   {ind:'Enfermedad de Parkinson',plan:`ROTIGOTINA parche transdérmico: iniciar 2 mg/24 h; subir 2 mg/24 h por semana según respuesta (hasta 8 mg/24 h en fases iniciales). Rotar la zona de aplicación.`},
+   {ind:'Síndrome de piernas inquietas',plan:`ROTIGOTINA parche 1 mg/24 h; subir según respuesta hasta 3 mg/24 h.`},
+ ]},
+ {n:'SAFINAMIDA',inds:[
+   {ind:'Enfermedad de Parkinson (adyuvante a levodopa)',plan:`SAFINAMIDA 50 mg al día; puede subirse a 100 mg al día según respuesta.`},
+ ]},
+ {n:'SELEGILINA',inds:[
+   {ind:'Enfermedad de Parkinson',plan:`SELEGILINA 5 mg en el desayuno y 5 mg a mediodía (evitar dosis vespertina por insomnio).`},
+ ]},
+ {n:'SULPIRIDA',inds:[
+   {ind:'Vértigo',plan:`SULPIRIDA 50 mg cada 8 horas durante unos días en el episodio agudo.`},
+ ]},
+ {n:'SUMATRIPTÁN',inds:[
+   {ind:'Migraña (tratamiento agudo)',plan:`SUMATRIPTÁN 50 mg al inicio de la crisis (puede usarse 100 mg); repetir a las 2 horas si reaparece (máximo 200 mg al día).`},
+   {ind:'Cefalea en racimos (agudo)',plan:`SUMATRIPTÁN 6 mg subcutáneo al inicio de la crisis (máximo 2 dosis al día separadas 1 hora).`},
+ ]},
+ {n:'TETRABENAZINA',inds:[
+   {ind:'Corea (Huntington) / discinesias',plan:`TETRABENAZINA: iniciar 12,5 mg al día; subir según respuesta hasta 25 mg cada 8 horas.`},
+ ]},
+ {n:'TIZANIDINA',inds:[
+   {ind:'Espasticidad',plan:`TIZANIDINA: iniciar 2 mg por la noche; subir de 2 en 2 mg cada 3-4 días hasta 6-24 mg al día repartidos.`},
+ ]},
+ {n:'TOPIRAMATO',inds:[
+   {ind:'Migraña (preventivo)',plan:`TOPIRAMATO: 25 mg por la noche durante 1 semana; subir 25 mg cada semana hasta 50 mg cada 12 horas (100 mg al día). Dosis objetivo habitual 100 mg al día.`},
+   {ind:'Epilepsia',plan:`TOPIRAMATO: iniciar 25-50 mg al día; subir 25-50 mg por semana hasta 100-200 mg cada 12 horas según respuesta.`},
+ ]},
+ {n:'TRAZODONA',inds:[
+   {ind:'Insomnio',plan:`TRAZODONA 50-100 mg por la noche (puede iniciarse en 25-50 mg).`},
+ ]},
+ {n:'TRIHEXIFENIDILO',inds:[
+   {ind:'Distonía / temblor parkinsoniano',plan:`TRIHEXIFENIDILO: iniciar 1 mg al día; subir 1-2 mg cada pocos días hasta 6-10 mg al día repartidos.`},
+ ]},
+ {n:'VALPROATO',inds:[
+   {ind:'Epilepsia generalizada',plan:`VALPROATO: iniciar 300 mg cada 12 horas; subir según respuesta hasta 500-1000 mg cada 12 horas.`},
+   {ind:'Migraña (preventivo)',plan:`VALPROATO 300-500 mg cada 12 horas.`},
+ ]},
+ {n:'VENLAFAXINA',inds:[
+   {ind:'Migraña (preventivo)',plan:`VENLAFAXINA (liberación prolongada): iniciar 37,5 mg al día; subir a 75 mg al día, hasta 150 mg al día según respuesta.`},
+ ]},
+ {n:'VERAPAMILO',inds:[
+   {ind:'Cefalea en racimos (preventivo)',plan:`VERAPAMILO: iniciar 80 mg cada 8 horas; subir progresivamente según respuesta (a menudo 240-480 mg al día) con control de ECG.`},
+ ]},
+ {n:'ZONISAMIDA',inds:[
+   {ind:'Epilepsia focal',plan:`ZONISAMIDA: iniciar 50 mg al día; subir a intervalos de 1-2 semanas hasta 300-500 mg al día.`},
+   {ind:'Enfermedad de Parkinson (adyuvante)',plan:`ZONISAMIDA 25-50 mg al día como adyuvante.`},
+ ]},
+];
+function renderTrat(){
+  const host=$('tratHost');host.innerHTML='';
+  FARMACOS.forEach(f=>{
+    const det=document.createElement('details');det.className='fam';
+    const sum=document.createElement('summary');sum.textContent=f.n;det.appendChild(sum);
+    f.inds.forEach((it,idx)=>{
+      const id='tg_'+f.n.replace(/[^A-Z]/g,'').slice(0,10)+'_'+idx;
+      const d=document.createElement('div');d.className='indic';
+      d.innerHTML=`<h4>${it.ind} <button class="copybtn" style="margin-left:8px" onclick="copyPlan(this)">copiar</button> <button class="copybtn" onclick="volcarPlan(this)">↑ a plan</button></h4>${planBox(id,it.plan)}`;
+      det.appendChild(d);
+    });
+    host.appendChild(det);
+  });
+  bindPlans(host);
+}
+function copyPlan(btn){const t=btn.closest('.indic').querySelector('[data-plan]').value.trim();copyText(t,btn)}
+function volcarPlan(btn){const t=btn.closest('.indic').querySelector('[data-plan]').value.trim();insertTo('plan',t)}
+renderTrat();
+
+/* ===== NO FARMACOLÓGICO (con base en evidencia) ===== */
+const NOFARMA=[
+ {t:'Migraña',plan:`Medidas no farmacológicas en migraña:
+- Mantener un ritmo regular de sueño (horarios estables, evitar tanto el déficit como el exceso de sueño).
+- Ejercicio aeróbico regular de intensidad moderada (por ejemplo 30-40 minutos, 3 veces por semana): ha demostrado reducir la frecuencia de las crisis.
+- Hidratación adecuada y no saltarse comidas.
+- Reducir el consumo de cafeína y evitar su retirada brusca.
+- Identificar y limitar desencadenantes individuales con ayuda de un diario de cefaleas.
+- Técnicas de manejo del estrés: relajación, respiración, terapia cognitivo-conductual y biofeedback tienen evidencia de eficacia.
+- Evitar el abuso de analgésicos (no más de 2-3 días por semana) para prevenir la cefalea por uso excesivo de medicación.`},
+ {t:'Deterioro cognitivo / demencia',plan:`Medidas no farmacológicas en deterioro cognitivo:
+- Actividad física regular adaptada: el ejercicio aeróbico se asocia a beneficio cognitivo y funcional.
+- Estimulación cognitiva y mantenimiento de actividades mentales y sociales.
+- Control estricto de factores de riesgo vascular (tensión arterial, diabetes, colesterol, tabaquismo).
+- Corrección de déficits sensoriales (audición y visión), que influyen en el rendimiento cognitivo.
+- Higiene de sueño y tratamiento de la depresión si está presente.
+- Dieta cardiosaludable tipo mediterránea.
+- Establecer rutinas y un entorno seguro; planificar apoyos y descarga del cuidador.`},
+ {t:'Enfermedad de Parkinson',plan:`Medidas no farmacológicas en enfermedad de Parkinson:
+- Ejercicio físico regular: tiene evidencia sólida de beneficio sobre la movilidad, el equilibrio y la calidad de vida.
+- Fisioterapia orientada a marcha, equilibrio y prevención de caídas.
+- Logopedia si hay alteración de la voz o la deglución.
+- Terapia ocupacional para la autonomía en actividades diarias.
+- Mantener actividad social y cognitiva.
+- Cuidado nutricional; si hay estreñimiento, fibra e hidratación; separar las proteínas de la toma de levodopa si hay fluctuaciones.`},
+ {t:'Cefalea tensional',plan:`Medidas no farmacológicas en cefalea tensional:
+- Manejo del estrés y técnicas de relajación.
+- Ejercicio físico regular.
+- Higiene postural y de sueño; pausas en el trabajo con pantallas.
+- Fisioterapia y ejercicios de la musculatura cervical cuando hay componente miofascial.
+- Evitar el abuso de analgésicos.`},
+ {t:'Dolor neuropático',plan:`Medidas no farmacológicas en dolor neuropático:
+- Ejercicio físico adaptado y mantenimiento de la actividad.
+- Abordaje del sueño y del estado de ánimo, que modulan la percepción del dolor.
+- Terapias físicas y, en casos seleccionados, estimulación nerviosa (TENS).
+- Apoyo psicológico/terapia cognitivo-conductual en dolor crónico.`},
+ {t:'Insomnio / higiene de sueño',plan:`Higiene de sueño:
+- Horarios regulares de acostarse y levantarse, también en fin de semana.
+- Evitar pantallas, cafeína y alcohol en las horas previas a dormir.
+- Reservar la cama para dormir; si no se concilia el sueño, levantarse y volver cuando aparezca.
+- Ejercicio regular, evitando la franja inmediatamente anterior al sueño.
+- Ambiente oscuro, silencioso y fresco.`},
+];
+function renderNF(){
+  const host=$('nfHost');host.innerHTML='';
+  NOFARMA.forEach((x,i)=>{
+    const id='nf_'+i;
+    const det=document.createElement('details');det.className='fam';if(i===0)det.open=true;
+    const sum=document.createElement('summary');sum.textContent=x.t;det.appendChild(sum);
+    const d=document.createElement('div');d.className='indic';
+    d.innerHTML=`<div class="flex" style="margin-bottom:6px"><button class="copybtn" onclick="copyPlan2(this)">copiar</button><button class="copybtn" onclick="volcarPlan2(this)">↑ a plan</button></div>${planBox(id,x.plan)}`;
+    det.appendChild(d);host.appendChild(det);
+  });
+  bindPlans(host);
+}
+function copyPlan2(btn){const t=btn.closest('.indic').querySelector('[data-plan]').value.trim();copyText(t,btn)}
+function volcarPlan2(btn){const t=btn.closest('.indic').querySelector('[data-plan]').value.trim();insertTo('plan',t)}
+renderNF();
+
+renderCampos();
+</script>
+</body>
+</html>

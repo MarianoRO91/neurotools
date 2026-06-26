@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="theme-color" content="#0f1115">
+<title>Herramientas de Neurología</title>
+<style>
+  :root{--bg:#0f1115;--panel:#171a21;--panel2:#1e222c;--ink:#e6e8ec;--muted:#9aa3b2;--line:#2a2f3a;--accent:#6aa3ff;--accent2:#3d6fd1;--danger:#e06a6a}
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--bg);color:var(--ink);font:16px/1.5 system-ui,-apple-system,Segoe UI,Roboto,sans-serif}
+  header{padding:28px 16px 8px;text-align:center}
+  header h1{font-size:21px;margin:0 0 4px}
+  header p{color:var(--muted);font-size:13px;margin:0}
+  main{padding:16px;max-width:660px;margin:0 auto;display:flex;flex-direction:column;gap:12px}
+  .group-label{font-size:11px;text-transform:uppercase;letter-spacing:.6px;color:var(--muted);margin:10px 4px 0;font-weight:700}
+  a.card{display:block;text-decoration:none;background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:18px;color:var(--ink);transition:border-color .15s,background .15s}
+  a.card:hover{border-color:var(--accent);background:var(--panel2)}
+  a.card.urg{border-color:#5a2a2a}
+  a.card.urg:hover{border-color:var(--danger)}
+  a.card h2{margin:0 0 4px;font-size:17px;color:var(--accent)}
+  a.card.urg h2{color:var(--danger)}
+  a.card p{margin:0;color:var(--muted);font-size:13px}
+  .tag{display:inline-block;font-size:11px;color:var(--muted);border:1px solid var(--line);border-radius:20px;padding:2px 9px;margin-top:8px;margin-right:5px}
+  footer{text-align:center;color:var(--muted);font-size:11px;padding:22px 16px;line-height:1.6}
+</style>
+</head>
+<body>
+<header>
+  <h1>Herramientas de Neurología</h1>
+  <p>Uso local · procesamiento 100% en el navegador · sin transmisión de datos</p>
+</header>
+<main>
+  <div class="group-label">Guardia</div>
+  <a class="card urg" href="guardia_ictus.html">
+    <h2>⚡ Guardia · Código Ictus</h2>
+    <p>Cronograma con sellos de tiempo e intervalos, NIHSS seriada con exploración cualitativa automática, anamnesis, juicio con selectores de arteria/TOAST/TICI y plan. Informe con estructura de la plantilla de Diraya. Hasta 5 pacientes.</p>
+    <span class="tag">móvil · offline</span><span class="tag">copiar y autoenviar</span>
+  </a>
+
+  <div class="group-label">Consulta</div>
+  <a class="card" href="consulta_neuro_general.html">
+    <h2>Consulta de Neurología general</h2>
+    <p>Informe de primera visita y seguimiento, exploración con monigote, escalas (MMSE, MoCA, T@M, FAB, NIHSS…), parser de tratamiento (Receta XXI), peticiones y pruebas con fecha.</p>
+    <span class="tag">escritorio</span>
+  </a>
+  <a class="card" href="consulta_EM.html">
+    <h2>Consulta de Enfermedades desmielinizantes</h2>
+    <p>Informe inicial y evolutivo (resumen, DMT, anamnesis estructurada), EDSS y escalas de EM, tratamiento modificador y sintomático, parser de tratamiento, peticiones con neurofilamentos.</p>
+    <span class="tag">escritorio</span>
+  </a>
+
+  <div class="group-label">Calculadora</div>
+  <a class="card" href="NIHSS.html">
+    <h2>NIHSS</h2>
+    <p>Calculadora rápida con formato de informe del hospital y guardado de pacientes. Instalable como icono en el móvil.</p>
+    <span class="tag">móvil · offline</span>
+  </a>
+</main>
+<footer>
+  Herramientas de apoyo a la documentación clínica. No sustituyen el juicio del facultativo.<br>
+  Procesamiento 100% local en el navegador; ningún dato se transmite fuera del dispositivo.<br>
+  Los datos guardados (pacientes) residen solo en el navegador del dispositivo. Borrar al terminar.
+</footer>
+</body>
+</html>

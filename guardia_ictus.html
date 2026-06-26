@@ -1,0 +1,692 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Ictus">
+<meta name="theme-color" content="#0f1115">
+<title>Guardia · Código Ictus</title>
+<link rel="apple-touch-icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 180 180'%3E%3Crect width='180' height='180' rx='40' fill='%23c0392b'/%3E%3Ctext x='90' y='120' font-size='90' font-family='system-ui' font-weight='700' fill='white' text-anchor='middle'%3E%E2%9A%A1%3C/text%3E%3C/svg%3E">
+<style>
+  :root{
+    --bg:#0f1115;--panel:#171a21;--panel2:#1e222c;--ink:#e6e8ec;--muted:#9aa3b2;
+    --line:#2a2f3a;--accent:#6aa3ff;--accent2:#3d6fd1;--ok:#57c08a;--warn:#e0a85a;--danger:#e06a6a;
+    --mono:ui-monospace,Menlo,Consolas,monospace;
+  }
+  *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+  body{margin:0;background:var(--bg);color:var(--ink);font:16px/1.5 system-ui,-apple-system,Segoe UI,Roboto,sans-serif;padding-bottom:90px}
+  header{padding:calc(10px + env(safe-area-inset-top)) 14px 8px;background:var(--panel);border-bottom:1px solid var(--line);position:sticky;top:0;z-index:30}
+  .htop{display:flex;align-items:center;justify-content:space-between;gap:8px}
+  header h1{font-size:15px;margin:0;font-weight:700;letter-spacing:.3px}
+  header h1 .pt{color:var(--danger)}
+  .pacBtn{background:var(--panel2);border:1px solid var(--line);color:var(--ink);border-radius:8px;padding:6px 11px;font:inherit;font-size:13px;font-weight:600;cursor:pointer}
+  nav{display:flex;gap:3px;padding:7px 10px;border-bottom:1px solid var(--line);background:var(--panel);overflow-x:auto;position:sticky;top:48px;z-index:25}
+  nav button{background:transparent;border:1px solid transparent;color:var(--muted);padding:6px 11px;border-radius:7px;cursor:pointer;font-size:13px;font-weight:600;white-space:nowrap}
+  nav button.active{color:#fff;background:var(--accent2);border-color:var(--accent2)}
+  main{padding:12px;max-width:760px;margin:0 auto}
+  .tab{display:none}.tab.active{display:block}
+  .card{background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:14px;margin-bottom:12px}
+  .card h2{font-size:12px;margin:0 0 10px;color:var(--accent);font-weight:700;text-transform:uppercase;letter-spacing:.5px}
+  .card h3{font-size:12px;margin:14px 0 7px;color:var(--muted);font-weight:700}
+  label{display:block;font-size:12px;color:var(--muted);margin:0 0 4px}
+  input,select,textarea{width:100%;background:var(--panel2);border:1px solid var(--line);color:var(--ink);border-radius:8px;padding:9px 10px;font:inherit}
+  textarea{min-height:80px;resize:vertical;line-height:1.45}
+  .row{margin-bottom:10px}
+  .flex{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+  .g2{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+  .g3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px}
+  .btn{background:var(--accent2);border:none;color:#fff;padding:12px;border-radius:10px;font:inherit;font-weight:700;font-size:14px;cursor:pointer}
+  .btn:active{opacity:.85}
+  .btn.ghost{background:transparent;border:1px solid var(--line);color:var(--ink)}
+  .btn.warn{background:transparent;border:1px solid var(--danger);color:var(--danger)}
+  .btn.full{width:100%}
+  .tstamp{display:flex;align-items:center;gap:8px;padding:8px 0;border-bottom:1px solid var(--line)}
+  .tstamp:last-child{border-bottom:none}
+  .tstamp .lbl{flex:1;font-size:13px;font-weight:600}
+  .tstamp .lbl small{display:block;color:var(--muted);font-weight:400;font-size:11px}
+  .tstamp .hora{font-family:var(--mono);font-size:15px;color:var(--accent);min-width:54px;text-align:right}
+  .tstamp .hora.empty{color:var(--muted)}
+  .tstamp button{background:var(--accent2);border:none;color:#fff;border-radius:7px;padding:8px 12px;font:inherit;font-size:12px;font-weight:700;cursor:pointer;white-space:nowrap}
+  .tstamp button.edit{background:var(--panel2);border:1px solid var(--line);color:var(--muted);padding:8px 9px}
+  .calc{background:var(--panel2);border:1px solid var(--line);border-radius:9px;padding:10px;margin-top:10px;font-family:var(--mono);font-size:13px}
+  .calc div{display:flex;justify-content:space-between;padding:2px 0}
+  .calc .v{color:var(--accent);font-weight:700}.calc .v.alert{color:var(--warn)}
+  .qbtns{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:6px}
+  .qbtns button{background:var(--panel2);border:1px solid var(--line);color:var(--ink);border-radius:20px;padding:6px 12px;font:inherit;font-size:13px;cursor:pointer}
+  .qbtns button.on{background:var(--accent2);color:#fff;border-color:var(--accent2)}
+  .seg{display:inline-flex;border:1px solid var(--line);border-radius:8px;overflow:hidden;flex-wrap:wrap}
+  .seg button{background:var(--panel2);border:none;color:var(--muted);padding:8px 13px;cursor:pointer;font:inherit;font-size:13px;border-right:1px solid var(--line);font-weight:600}
+  .seg button:last-child{border-right:none}
+  .seg button.on{background:var(--accent2);color:#fff}
+  .tri{display:inline-flex;border:1px solid var(--line);border-radius:7px;overflow:hidden;margin-left:6px}
+  .tri button{background:var(--panel2);border:none;color:var(--muted);padding:5px 12px;cursor:pointer;font:inherit;font-size:12px;border-right:1px solid var(--line);font-weight:600}
+  .tri button:last-child{border-right:none}
+  .tri button.yes{background:var(--ok);color:#06281a}.tri button.no{background:var(--danger);color:#fff}
+  .frv-row{display:flex;align-items:center;justify-content:space-between;padding:6px 0;border-bottom:1px solid var(--line)}
+  .frv-row:last-child{border-bottom:none}
+  .frv-row .nm{font-size:13px}
+  .item{background:var(--panel2);border:1px solid var(--line);border-radius:10px;padding:10px;margin-bottom:8px}
+  .item .lab{font-weight:600;font-size:13px;margin-bottom:7px}
+  .item .lab .pts{float:right;font-family:var(--mono);color:var(--accent)}
+  .opts{display:flex;flex-direction:column;gap:4px}
+  .opts button{text-align:left;background:var(--bg);border:1px solid var(--line);color:var(--ink);border-radius:8px;padding:8px 10px;font:inherit;font-size:13px;cursor:pointer;display:flex;gap:8px;align-items:flex-start;line-height:1.3}
+  .opts button .n{font-family:var(--mono);font-weight:700;color:var(--muted);min-width:16px}
+  .opts button.on{background:var(--accent2);border-color:var(--accent);color:#fff}
+  .opts button.on .n{color:#fff}
+  .nihhead{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:10px}
+  .nihtot{font-family:var(--mono);font-size:15px;color:var(--accent);font-weight:700;background:var(--panel2);border:1px solid var(--line);padding:5px 12px;border-radius:20px}
+  .nihserie{display:flex;gap:6px;margin-bottom:10px}
+  .nihserie button{flex:1;background:var(--panel2);border:1px solid var(--line);color:var(--muted);border-radius:8px;padding:7px;font:inherit;font-size:12px;font-weight:600;cursor:pointer}
+  .nihserie button.on{background:var(--accent2);color:#fff;border-color:var(--accent2)}
+  .out{background:#000;border:1px solid var(--line);border-radius:11px;padding:13px;font-family:var(--mono);font-size:12px;white-space:pre-wrap;line-height:1.5;min-height:120px}
+  .bar{position:fixed;bottom:0;left:0;right:0;background:var(--panel);border-top:1px solid var(--line);padding:10px 12px calc(10px + env(safe-area-inset-bottom));display:flex;gap:8px;z-index:30}
+  .sheet{position:fixed;inset:0;background:rgba(0,0,0,.6);display:none;align-items:flex-end;z-index:40}
+  .sheet.show{display:flex}
+  .sheet-inner{background:var(--panel);width:100%;border-radius:18px 18px 0 0;padding:16px 16px calc(20px + env(safe-area-inset-bottom));max-height:85vh;overflow:auto}
+  .sheet h2{font-size:15px;margin:0 0 12px;display:flex;justify-content:space-between;align-items:center}
+  .sheet h2 .x{color:var(--muted);font-size:22px;cursor:pointer;padding:0 6px}
+  .slot{display:flex;align-items:center;gap:8px;border:1px solid var(--line);border-radius:11px;padding:10px;margin-bottom:8px;background:var(--panel2)}
+  .slot .info{flex:1;min-width:0}
+  .slot .info .name{font-weight:600;font-size:14px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .slot .info .meta{font-size:12px;color:var(--muted);font-family:var(--mono)}
+  .slot button{background:var(--accent2);border:none;color:#fff;border-radius:8px;padding:7px 11px;font:inherit;font-size:12px;font-weight:600;cursor:pointer}
+  .slot button.load{background:var(--panel);border:1px solid var(--line);color:var(--ink)}
+  .slot button.del{background:transparent;border:1px solid var(--danger);color:var(--danger)}
+  .toast{position:fixed;bottom:84px;left:50%;transform:translateX(-50%);background:var(--ok);color:#06281a;padding:10px 20px;border-radius:10px;font-weight:700;font-size:14px;opacity:0;transition:opacity .2s;pointer-events:none;z-index:60}
+  .toast.show{opacity:1}
+  .hint{font-size:11px;color:var(--muted);text-align:center;padding:6px 0}
+  .disc{font-size:10.5px;color:var(--muted);padding:10px 14px 0;line-height:1.5;text-align:center}
+</style>
+</head>
+<body>
+<header>
+  <div class="htop">
+    <h1>⚡ Neurología de guardia <span class="pt">· Ictus</span></h1>
+    <button class="pacBtn" onclick="openSheet()">Pacientes</button>
+  </div>
+</header>
+
+<nav id="nav">
+  <button data-tab="crono" class="active">Cronograma</button>
+  <button data-tab="antec">Antecedentes</button>
+  <button data-tab="actual">Enf. actual</button>
+  <button data-tab="explora">Exploración</button>
+  <button data-tab="pruebas">Pruebas</button>
+  <button data-tab="jc">Juicio</button>
+  <button data-tab="plan">Plan</button>
+  <button data-tab="informe">Informe</button>
+</nav>
+
+<main>
+
+<!-- ===== CRONOGRAMA ===== -->
+<section class="tab active" id="crono">
+  <div class="card">
+    <h2>Cronograma del código</h2>
+    <div id="tstamps"></div>
+    <div class="hint">Toca «marcar» para sellar la hora actual. Toca ✎ para corregirla.</div>
+  </div>
+  <div class="card">
+    <h2>Resumen de tiempos (calculado)</h2>
+    <div class="calc" id="tcalc"><div>Rellena las horas para ver los intervalos.</div></div>
+  </div>
+</section>
+
+<!-- ===== ANTECEDENTES ===== -->
+<section class="tab" id="antec">
+  <div class="card">
+    <h2>Filiación</h2>
+    <div class="g2">
+      <div class="row"><label>Edad</label><input type="number" id="f_edad" min="0" max="120"></div>
+      <div class="row"><label>Sexo</label><select id="f_sexo"><option value=""></option><option>varón</option><option>mujer</option></select></div>
+    </div>
+    <div class="row"><label>Rankin previo al ictus</label><div class="qbtns" id="f_rankin"></div></div>
+  </div>
+  <div class="card">
+    <h2>Alergias / hábitos</h2>
+    <div class="row"><label>Alergias medicamentosas</label><input type="text" id="ap_alergias" placeholder="NAMC, o especificar"></div>
+    <div class="row"><label>Hábitos tóxicos (texto libre)</label><input type="text" id="ap_toxicos" placeholder="exfumador desde…, alcohol…"></div>
+  </div>
+  <div class="card">
+    <h2>Factores de riesgo vascular</h2>
+    <div id="frvList"></div>
+    <div class="hint">Sí / No / — (en blanco no se menciona). Se redactan en una línea.</div>
+  </div>
+  <div class="card">
+    <h2>Otros antecedentes personales</h2>
+    <textarea id="ap_otros" placeholder="patologías relevantes, cirugías previas, antecedentes hematológicos/infecciosos…"></textarea>
+  </div>
+  <div class="card">
+    <h2>Tratamiento previo / habitual</h2>
+    <div class="row"><label>Antiagregación / anticoagulación</label>
+      <div class="qbtns" id="ot_antico"></div>
+      <input type="text" id="ot_antico_det" placeholder="fármaco, dosis y última toma (p.ej. apixabán 5 mg/12h, última 20h)"></div>
+    <div class="row"><label>Resto de tratamiento habitual</label><textarea id="ot_ttohab" placeholder="lista de tratamiento domiciliario"></textarea></div>
+  </div>
+</section>
+
+<!-- ===== ENFERMEDAD ACTUAL ===== -->
+<section class="tab" id="actual">
+  <div class="card">
+    <h2>Inicio de los síntomas</h2>
+    <div class="row"><div class="seg" id="ea_tipoInicio">
+      <button data-v="Conocido">Conocido</button><button data-v="Ictus del despertar">Del despertar</button><button data-v="Indeterminado">Indeterminado</button>
+    </div></div>
+    <div class="g2">
+      <div class="row"><label>Día de inicio</label><input type="text" id="ea_dia" placeholder="DD/MM/AAAA"></div>
+      <div class="row"><label>Hora inicio / última vez visto bien</label><div class="flex"><input type="time" id="ea_hora" style="flex:1"><button class="btn ghost" style="padding:9px 11px" onclick="$('ea_hora').value=nowHM();build()">ahora</button></div></div>
+    </div>
+    <div class="row"><label>¿Se activó el Código Ictus?</label>
+      <div class="seg" id="ea_codigo"><button data-v="Sí">Sí</button><button data-v="No">No</button></div></div>
+  </div>
+  <div class="card">
+    <h2>Narrativa (enfermedad actual)</h2>
+    <textarea id="ea_narrativa" placeholder="historia del cuadro: edad, antecedentes, forma de inicio, evolución, quién activa, neuroimagen, contacto para trombectomía…" style="min-height:160px"></textarea>
+    <div class="hint">El resumen de tiempos se añade solo desde el cronograma al generar el informe.</div>
+  </div>
+</section>
+
+<!-- ===== NIHSS ===== -->
+<!-- ===== EXPLORACIÓN (constantes + NIHSS + texto) ===== -->
+<section class="tab" id="explora">
+  <div class="card">
+    <h2>Constantes al ingreso</h2>
+    <div class="g2">
+      <div class="row"><label>TAS (mmHg)</label><input type="number" id="c_tas"></div>
+      <div class="row"><label>TAD (mmHg)</label><input type="number" id="c_tad"></div>
+      <div class="row"><label>Glucemia capilar (mg/dl)</label><input type="number" id="c_gluc"></div>
+      <div class="row"><label>Tª (°C)</label><input type="number" id="c_temp" step="0.1"></div>
+    </div>
+  </div>
+  <div class="card">
+    <div class="nihhead">
+      <h2 style="margin:0">NIHSS</h2>
+      <div class="nihtot"><span id="NIH_tot">0</span> · <span id="NIH_sev" style="font-size:11px;color:var(--muted)">sin déficit</span></div>
+    </div>
+    <div class="nihserie" id="nihSerie"></div>
+    <div class="row"><label>Lado afecto (orienta mirada, campos, facial, sensibilidad)</label>
+      <div class="seg" id="nihLado"><button data-v="der">Derecho</button><button data-v="izq">Izquierdo</button><button data-v="">—</button></div></div>
+    <div id="nihItems"></div>
+    <div class="out" id="nihOut" style="margin-top:10px"></div>
+  </div>
+  <div class="card">
+    <h2>Añadidos a la exploración</h2>
+    <textarea id="e_txt" placeholder="hallazgos que no recoge el NIHSS (datos corticales parietales, dismetría no valorable, matices…)" style="min-height:90px"></textarea>
+    <div class="hint">La exploración cualitativa se genera sola desde el NIHSS, con su puntuación entre paréntesis, más el bloque de 4 líneas. Aquí solo añades lo extra.</div>
+  </div>
+</section>
+
+<!-- ===== PRUEBAS ===== -->
+<section class="tab" id="pruebas">
+  <div class="card">
+    <h2>EKG</h2>
+    <div class="seg" id="ekg_ritmo"><button data-v="Ritmo sinusal sin alteraciones">RS normal</button><button data-v="FA/Flutter">FA/Flutter</button><button data-v="Otras alteraciones">Otras</button></div>
+    <input type="text" id="ekg_otros" placeholder="otras alteraciones (texto)" style="margin-top:8px">
+  </div>
+  <div class="card">
+    <h2>Neuroimagen realizada</h2>
+    <div class="qbtns" id="ni_tipos"></div>
+    <div class="row"><label>TC craneal basal (ASPECTS, signos precoces, sangrado)</label><textarea id="p_tc"></textarea></div>
+    <div class="row"><label>AngioTC / oclusión (vaso, colateralidad)</label><textarea id="p_angio"></textarea></div>
+    <div class="row"><label>TC perfusión (core/penumbra, mismatch)</label><textarea id="p_perf"></textarea></div>
+  </div>
+  <div class="card">
+    <h2>Laboratorio (opcional)</h2>
+    <textarea id="p_lab" placeholder="glucemia, creatinina, plaquetas, INR, coagulación…"></textarea>
+  </div>
+</section>
+
+<!-- ===== JUICIO ===== -->
+<section class="tab" id="jc">
+  <div class="card">
+    <h2>Tipo de ictus</h2>
+    <div class="seg" id="dx_tipo"><button data-v="isq">Isquémico</button><button data-v="hem">Hemorrágico</button><button data-v="ait">AIT</button></div>
+  </div>
+  <div class="card" id="jcIsq">
+    <h2>Ictus isquémico</h2>
+    <div class="row"><label>Lado / hemisferio</label>
+      <div class="seg" id="isq_lado"><button data-v="derecho">Derecho</button><button data-v="izquierdo">Izquierdo</button><button data-v="">—</button></div></div>
+    <div class="row"><label>Arteria ocluida</label>
+      <div class="qbtns" id="isq_arteria"></div></div>
+    <div class="row"><label>Etiología (TOAST)</label>
+      <div class="qbtns" id="toast"></div></div>
+  </div>
+  <div class="card" id="jcTrat">
+    <h2>Tratamiento de reperfusión realizado</h2>
+    <div class="qbtns" id="trat_tipo"></div>
+    <div class="row" id="trat_ticiWrap"><label>Grado de recanalización (TICI)</label>
+      <div class="seg" id="trat_tici"><button data-v="0">0</button><button data-v="2a">2a</button><button data-v="2b">2b</button><button data-v="2c">2c</button><button data-v="3">3</button></div></div>
+  </div>
+  <div class="card">
+    <h2>Matices (texto libre)</h2>
+    <textarea id="j_txt" placeholder="precisiones del juicio clínico que no recojan los selectores…" style="min-height:80px"></textarea>
+  </div>
+</section>
+
+<!-- ===== PLAN ===== -->
+<section class="tab" id="plan">
+  <div class="card">
+    <h2>Actitud</h2>
+    <div class="frv-row"><span class="nm">Inicio de antiagregación</span><span class="tri" data-tri="pl_antiag"></span></div>
+    <div class="frv-row"><span class="nm">Inicio de anticoagulación</span><span class="tri" data-tri="pl_antico"></span></div>
+    <div class="frv-row"><span class="nm">Ingreso en Unidad de Ictus</span><span class="tri" data-tri="pl_ui"></span></div>
+  </div>
+  <div class="card">
+    <h2>Tratamiento fibrinolítico IV</h2>
+    <div class="row"><div class="seg" id="fib_si"><button data-v="Sí">Sí</button><button data-v="No">No</button></div></div>
+    <div class="g2">
+      <div class="row"><label>Día / hora de inicio</label><input type="text" id="fib_hora" placeholder="DD/MM AAAA HH:MM"></div>
+      <div class="row"><label>Dosis (mg)</label><input type="number" id="fib_dosis"></div>
+    </div>
+  </div>
+  <div class="card">
+    <h2>Reperfusión intra-arterial</h2>
+    <div class="row"><div class="seg" id="rep_si"><button data-v="Sí">Sí</button><button data-v="No">No</button></div></div>
+    <div class="row"><label>Tipo</label>
+      <div class="qbtns" id="rep_tipo"></div></div>
+    <div class="g2">
+      <div class="row"><label>Hora punción femoral</label><input type="text" id="rep_puncion" placeholder="DD/MM AAAA HH:MM"></div>
+      <div class="row"><label>Grado recanalización (TICI)</label>
+        <div class="seg" id="rep_tici"><button data-v="0">0</button><button data-v="2a">2a</button><button data-v="2b">2b</button><button data-v="2c">2c</button><button data-v="3">3</button></div></div>
+    </div>
+    <div class="g2">
+      <div class="row"><label>NIHSS post-reperfusión</label><input type="number" id="rep_nihpost"></div>
+      <div class="row"><label>Anestesia general</label><div class="seg" id="rep_anest"><button data-v="Sí">Sí</button><button data-v="No">No</button></div></div>
+    </div>
+  </div>
+  <div class="card">
+    <h2>Comentarios</h2>
+    <div class="qbtns" id="com_quick"></div>
+    <textarea id="com_txt" placeholder="incidencias del procedimiento, ingreso, información a familia, control TC, analíticas…" style="min-height:120px"></textarea>
+  </div>
+</section>
+
+<!-- ===== INFORME ===== -->
+<section class="tab" id="informe">
+  <div class="card">
+    <h2>Historia generada</h2>
+    <div class="out" id="out"></div>
+  </div>
+</section>
+
+</main>
+
+<div class="bar">
+  <button class="btn ghost" style="flex:0 0 auto" onclick="go('informe');build()">Ver informe</button>
+  <button class="btn full" onclick="copyAll()">Copiar todo</button>
+  <button class="btn ghost" style="flex:0 0 auto" onclick="sendSelf()">Enviar</button>
+</div>
+
+<div class="sheet" id="sheet">
+  <div class="sheet-inner">
+    <h2>Pacientes (máx. 5) <span class="x" onclick="closeSheet()">✕</span></h2>
+    <input type="text" id="patLabel" placeholder="Etiqueta (cama, iniciales, «ictus 2»…)" maxlength="24" style="margin-bottom:10px">
+    <button class="btn full" style="margin-bottom:8px" onclick="saveCurrent()">Guardar caso actual</button>
+    <button class="btn ghost full" style="margin-bottom:14px" onclick="nuevoCaso()">Nuevo caso (vaciar)</button>
+    <div id="slots"></div>
+    <button class="btn warn full" style="margin-top:6px" onclick="clearAll()">Borrar todos</button>
+    <div class="disc">Datos sensibles de urgencias: evita nombres completos en la etiqueta y borra al terminar la guardia. Todo se guarda solo en este dispositivo.</div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+function $(id){return document.getElementById(id)}
+function toast(m){const t=$('toast');t.textContent=m;t.classList.add('show');setTimeout(()=>t.classList.remove('show'),1300)}
+function go(tab){document.querySelectorAll('#nav button').forEach(b=>b.classList.toggle('active',b.dataset.tab===tab));document.querySelectorAll('.tab').forEach(s=>s.classList.toggle('active',s.id===tab));window.scrollTo(0,0)}
+document.querySelectorAll('#nav button').forEach(b=>b.onclick=()=>{go(b.dataset.tab);if(b.dataset.tab==='informe')build()});
+function sanitize(s){return (s||'').replace(/→/g,'->').replace(/≥/g,'>=').replace(/≤/g,'<=').replace(/—/g,'-').replace(/·/g,'-').replace(/•/g,'-').replace(/×/g,'x').replace(/[“”]/g,'"').replace(/[‘’]/g,"'").replace(/…/g,'...');}
+function val(id){const el=$(id);return el?(el.value||'').trim():''}
+function nowHM(){const d=new Date();return String(d.getHours()).padStart(2,'0')+':'+String(d.getMinutes()).padStart(2,'0')}
+
+/* estado de selecciones */
+const S={rankin:'',tipoInicio:'',codigo:'',antico:'',ekg:'',ni:[],nihLado:'',
+  dx:'',isqLado:'',arteria:'',toast:'',tratTipo:[],tratTici:'',
+  frv:{}, tri:{pl_antiag:'',pl_antico:'',pl_ui:''},
+  fib:'',rep:'',repTipo:[],tici:'',anest:''};
+
+/* ===== CRONOGRAMA ===== */
+const TS=[
+  ['inicio','Inicio de síntomas','o última vez visto bien'],
+  ['valoracion','Valoración por Neurología',''],
+  ['tc','TC craneal',''],
+  ['llamada','Llamada / contacto centro',''],
+  ['llegada','Llegada a nuestro centro',''],
+  ['puncion','Punción femoral',''],
+  ['fin','Recanalización / fin procedimiento','']
+];
+let crono={};
+function buildTstamps(){
+  const host=$('tstamps');host.innerHTML='';
+  TS.forEach(t=>{const v=crono[t[0]]||'';
+    const d=document.createElement('div');d.className='tstamp';
+    d.innerHTML=`<div class="lbl">${t[1]}${t[2]?`<small>${t[2]}</small>`:''}</div>
+      <div class="hora ${v?'':'empty'}" id="h_${t[0]}">${v||'--:--'}</div>
+      <button onclick="markTs('${t[0]}')">marcar</button>
+      <button class="edit" onclick="editTs('${t[0]}')">✎</button>`;
+    host.appendChild(d)});
+  calcTimes();
+}
+function markTs(k){crono[k]=nowHM();$('h_'+k).textContent=crono[k];$('h_'+k).classList.remove('empty');if(k==='inicio'&&!val('ea_hora'))$('ea_hora').value=crono[k];calcTimes();build()}
+function editTs(k){const cur=crono[k]||nowHM();const v=prompt('Hora (HH:MM):',cur);if(v===null)return;if(/^\d{1,2}:\d{2}$/.test(v.trim())){crono[k]=v.trim().padStart(5,'0');buildTstamps();build()}else if(v.trim()===''){delete crono[k];buildTstamps();build()}else toast('Formato HH:MM')}
+function toMin(hm){if(!hm||!/^\d{1,2}:\d{2}$/.test(hm))return null;const[h,m]=hm.split(':').map(Number);return h*60+m}
+function diffMin(a,b){let x=toMin(a),y=toMin(b);if(x===null||y===null)return null;let d=y-x;if(d<-720)d+=1440;if(d>720)d-=1440;return d}
+function fmtDur(min){if(min===null)return null;const neg=min<0;min=Math.abs(min);const h=Math.floor(min/60),m=min%60;return (neg?'-':'')+(h?h+'h ':'')+m+'min'}
+function calcTimes(){
+  const ini=crono.inicio||val('ea_hora');
+  const rows=[];
+  const add=(lbl,a,b,al)=>{const d=diffMin(a,b);if(d!==null){const c=(al&&d>al)?' alert':'';rows.push(`<div><span>${lbl}</span><span class="v${c}">${fmtDur(d)}</span></div>`)}};
+  add('Inicio → punción',ini,crono.puncion,360);
+  add('Inicio → recanalización',ini,crono.fin);
+  add('Llegada → punción',crono.llegada,crono.puncion);
+  add('Punción → recanalización',crono.puncion,crono.fin);
+  add('Inicio → TC',ini,crono.tc);
+  $('tcalc').innerHTML=rows.length?rows.join(''):'<div>Rellena las horas para ver los intervalos.</div>';
+}
+/* resumen de tiempos en texto para el informe */
+function tiemposTxt(){
+  const map={inicio:'Inicio de síntomas',valoracion:'Valoración por Neurología',tc:'TC craneal',llamada:'Llamada/contacto',llegada:'Llegada a nuestro centro',puncion:'Punción femoral',fin:'Recanalización/fin'};
+  const lines=TS.filter(t=>crono[t[0]]).map(t=>`- ${map[t[0]]}: ${crono[t[0]]}`);
+  return lines;
+}
+
+/* ===== helpers de botones ===== */
+function chipMulti(hostId,items,arrRef){
+  const host=$(hostId);host.innerHTML='';
+  items.forEach(it=>{const b=document.createElement('button');b.textContent=it;if(arrRef().includes(it))b.classList.add('on');
+    b.onclick=()=>{const a=arrRef();const i=a.indexOf(it);if(i>=0)a.splice(i,1);else a.push(it);b.classList.toggle('on');build()};host.appendChild(b)});
+}
+function chipSingle(hostId,items,setter,getter){
+  const host=$(hostId);host.innerHTML='';
+  items.forEach(it=>{const b=document.createElement('button');b.dataset.v=it;b.textContent=it;if(getter()===it)b.classList.add('on');
+    b.onclick=()=>{host.querySelectorAll('button').forEach(x=>x.classList.remove('on'));b.classList.add('on');setter(it);build()};host.appendChild(b)});
+}
+function segPick(hostId,setter,getter){const host=$(hostId);if(!host)return;host.querySelectorAll('button').forEach(b=>{b.classList.toggle('on',getter()===b.dataset.v);b.onclick=()=>{host.querySelectorAll('button').forEach(x=>x.classList.remove('on'));b.classList.add('on');setter(b.dataset.v);build()}})}
+function insertChips(hostId,targetId,items){const host=$(hostId);host.innerHTML='';items.forEach(it=>{const b=document.createElement('button');b.textContent=it;b.onclick=()=>{const el=$(targetId);el.value=(el.value?el.value.replace(/\s*$/,'')+'\n':'')+it;build()};host.appendChild(b)})}
+
+/* FRV con tri-estado (Sí/No/—) que se redactan */
+const FRV=[['HTA','Hipertensión arterial'],['DM','Diabetes mellitus'],['DLP','Dislipemia'],['Tabaco','Tabaquismo'],['Obesidad','Obesidad'],['FA','Fibrilación auricular'],['CI','Cardiopatía isquémica'],['ECV','Enfermedad cerebrovascular previa'],['ERC','Insuficiencia renal crónica']];
+function buildFRV(){
+  const host=$('frvList');host.innerHTML='';
+  FRV.forEach(f=>{const cur=S.frv[f[0]]||'';
+    const d=document.createElement('div');d.className='frv-row';
+    d.innerHTML=`<span class="nm">${f[1]}</span><span class="tri">
+      <button data-v="si" class="${cur==='si'?'yes':''}">Sí</button>
+      <button data-v="no" class="${cur==='no'?'no':''}">No</button>
+      <button data-v="" class="${cur===''?'on':''}">—</button></span>`;
+    d.querySelectorAll('button').forEach(b=>b.onclick=()=>{S.frv[f[0]]=b.dataset.v;buildFRV();build()});
+    host.appendChild(d)});
+}
+function frvTxt(){
+  const parts=[];
+  FRV.forEach(f=>{const v=S.frv[f[0]];if(v==='si')parts.push(f[1]+'.');else if(v==='no')parts.push('No '+f[1].toLowerCase()+'.')});
+  return parts.length?'Factores de riesgo vascular: '+parts.join(' '):'';
+}
+
+/* tri-estado del plan */
+function buildTris(){
+  document.querySelectorAll('[data-tri]').forEach(span=>{
+    const key=span.dataset.tri;const cur=S.tri[key]||'';
+    span.innerHTML=`<button data-v="si" class="${cur==='si'?'yes':''}">Sí</button><button data-v="no" class="${cur==='no'?'no':''}">No</button><button data-v="" class="${cur===''?'on':''}">—</button>`;
+    span.querySelectorAll('button').forEach(b=>b.onclick=()=>{S.tri[key]=b.dataset.v;buildTris();build()});
+  });
+}
+
+/* init de botones */
+chipSingle('f_rankin',['0','1','2','3','4','5'],v=>S.rankin=v,()=>S.rankin);
+chipSingle('ot_antico',['Ninguno','Antiagregante','ACOD','AVK'],v=>S.antico=v,()=>S.antico);
+segPick('ea_tipoInicio',v=>S.tipoInicio=v,()=>S.tipoInicio);
+segPick('ea_codigo',v=>S.codigo=v,()=>S.codigo);
+segPick('ekg_ritmo',v=>S.ekg=v,()=>S.ekg);
+chipMulti('ni_tipos',['TC craneal','AngioTC','TC perfusión','RM craneal','Doppler TSA'],()=>S.ni);
+segPick('dx_tipo',v=>{S.dx=v;updateJcVis()},()=>S.dx);
+segPick('isq_lado',v=>S.isqLado=v,()=>S.isqLado);
+chipSingle('isq_arteria',['ACI','ACI-ACM (tándem)','ACM-M1','ACM-M2','ACA','ACP','AV','AB','Lacunar'],v=>S.arteria=v,()=>S.arteria);
+chipSingle('toast',['Aterotrombótico','Cardioembólico','Lacunar','Indeterminado','Inhabitual'],v=>S.toast=v,()=>S.toast);
+chipMulti('trat_tipo',['Fibrinólisis IV','Trombectomía mecánica'],()=>S.tratTipo);
+segPick('trat_tici',v=>S.tratTici=v,()=>S.tratTici);
+function updateJcVis(){
+  $('jcIsq').style.display=(S.dx==='isq')?'block':'none';
+  $('jcTrat').style.display=(S.dx==='isq'||S.dx==='hem')?'block':'none';
+  $('trat_ticiWrap').style.display=(S.tratTipo&&S.tratTipo.includes('Trombectomía mecánica'))?'block':'none';
+}
+segPick('fib_si',v=>S.fib=v,()=>S.fib);
+segPick('rep_si',v=>S.rep=v,()=>S.rep);
+chipMulti('rep_tipo',['Trombectomía mecánica','Fibrinólisis intra-arterial'],()=>S.repTipo);
+segPick('rep_tici',v=>S.tici=v,()=>S.tici);
+segPick('rep_anest',v=>S.anest=v,()=>S.anest);
+segPick('nihLado',v=>S.nihLado=v,()=>S.nihLado);
+insertChips('com_quick','com_txt',[
+  'Se realiza trombectomía mecánica con recanalización TICI 3, sin incidencias durante el procedimiento.',
+  'Ingresa en Unidad de Ictus para vigilancia neurológica estrecha y monitorización.',
+  'Se solicitan perfiles analíticos / analítica urgente.',
+  'Se informa a paciente y familiares.',
+  'Mañana se realizará TC de cráneo de control.',
+  'Reexploración posterior con mejoría neurológica.'
+]);
+buildFRV();buildTris();
+
+/* ===== NIHSS ===== */
+const NIH_ITEMS=[
+ ['1a Consciencia','0 alerta · 1 somnoliento · 2 obnubilado · 3 coma',3],
+ ['1b Preguntas (mes, edad)','0 ambas · 1 una · 2 ninguna',2],
+ ['1c Órdenes','0 ambas · 1 una · 2 ninguna',2],
+ ['2 Mirada','0 normal · 1 paresia parcial · 2 desviación forzada',2],
+ ['3 Campos visuales','0 normal · 1 hemianopsia parcial · 2 completa · 3 bilateral',3],
+ ['4 Paresia facial','0 normal · 1 menor · 2 parcial · 3 completa',3],
+ ['5a Brazo DERECHO','0 no caída · 1 caída en <10s · 2 esfuerzo contra gravedad · 3 movimiento en plano · 4 plejia',4],
+ ['5b Brazo IZQUIERDO','0 no caída · 1 caída en <10s · 2 esfuerzo contra gravedad · 3 movimiento en plano · 4 plejia',4],
+ ['6a Pierna DERECHA','0 no caída · 1 caída en <5s · 2 esfuerzo contra gravedad · 3 movimiento en plano · 4 plejia',4],
+ ['6b Pierna IZQUIERDA','0 no caída · 1 caída en <5s · 2 esfuerzo contra gravedad · 3 movimiento en plano · 4 plejia',4],
+ ['7 Ataxia','0 ausente · 1 una extremidad · 2 dos',2],
+ ['8 Sensibilidad','0 normal · 1 leve-moderada · 2 grave/anestesia',2],
+ ['9 Lenguaje','0 normal · 1 leve-moderada · 2 grave · 3 mutismo/global',3],
+ ['10 Disartria','0 normal · 1 leve-moderada · 2 grave/anartria',2],
+ ['11 Extinción e inatención (anosognosia)','0 normal · 1 parcial · 2 completa',2],
+];
+const NIH_SERIES=['Llegada','Post-tto','24 h'];
+let nihActive=0;
+let nihData=[Array(15).fill(0),Array(15).fill(0),Array(15).fill(0)];
+function buildNihSerie(){const h=$('nihSerie');h.innerHTML='';NIH_SERIES.forEach((s,i)=>{const b=document.createElement('button');b.textContent=s;if(i===nihActive)b.classList.add('on');b.onclick=()=>{nihActive=i;buildNihSerie();buildNihItems()};h.appendChild(b)})}
+function buildNihItems(){
+  const host=$('nihItems');host.innerHTML='';
+  NIH_ITEMS.forEach((it,i)=>{const sel=nihData[nihActive][i];
+    const d=document.createElement('div');d.className='item';
+    const opts=[];for(let v=0;v<=it[2];v++)opts.push(`<button data-i="${i}" data-v="${v}" class="${sel===v?'on':''}"><span class="n">${v}</span><span>${it[1].split(' · ')[v]||v}</span></button>`);
+    d.innerHTML=`<div class="lab">${it[0]}<span class="pts" id="np_${i}">${sel}</span></div><div class="opts">${opts.join('')}</div>`;
+    host.appendChild(d)});
+  host.querySelectorAll('button').forEach(b=>b.onclick=()=>{const i=+b.dataset.i;nihData[nihActive][i]=+b.dataset.v;const item=host.querySelectorAll('.item')[i];item.querySelectorAll('button').forEach(x=>x.classList.remove('on'));b.classList.add('on');$('np_'+i).textContent=nihData[nihActive][i];updNih();build()});
+  updNih();
+}
+function nihTotal(arr){return arr.reduce((a,b)=>a+b,0)}
+function nihSev(t){return t===0?'sin déficit':t<=4?'leve':t<=15?'moderado':t<=20?'moderado-grave':'grave'}
+function nihFmt(arr){return `${arr.slice(0,5).join('+')}\n${arr.slice(5,10).join('+')} NIHSS ${nihTotal(arr)}\n${arr.slice(10,15).join('+')}`}
+function updNih(){const t=nihTotal(nihData[nihActive]);$('NIH_tot').textContent=t;$('NIH_sev').textContent=nihSev(t);$('nihOut').textContent=nihFmt(nihData[nihActive])}
+/* prosa cualitativa desde NIHSS, con descripción NIHSS + (puntuación); normales en estilo cribado */
+function capP(s){return s.charAt(0).toUpperCase()+s.slice(1)}
+function nihProsa(n,lado){
+  const L=lado==='der'?'derecha':lado==='izq'?'izquierda':'';
+  const P=[];
+  const A=(v,norm,desc)=>{if(v===0){if(norm)P.push(norm)}else{P.push(desc(v)+' ('+v+')')}};
+  A(n[0],'alerta',v=>({1:'somnoliento',2:'obnubilado',3:'coma'})[v]);
+  A(n[1],'responde mes y edad',v=>({1:'responde una pregunta',2:'no responde mes ni edad'})[v]);
+  A(n[2],'obedece órdenes',v=>({1:'obedece una orden',2:'no obedece órdenes'})[v]);
+  A(n[3],'MOEs sin restricción',v=>({1:'paresia parcial de la mirada',2:'desviación forzada'+(L?' a la '+L:'')})[v]);
+  A(n[4],'campos por confrontación normales',v=>({1:'hemianopsia parcial'+(L?' '+L:''),2:'hemianopsia completa'+(L?' '+L:''),3:'hemianopsia bilateral'})[v]);
+  A(n[5],'no asimetría facial',v=>({1:'paresia facial menor'+(L?' '+L:''),2:'paresia facial parcial'+(L?' '+L:''),3:'paresia facial completa'+(L?' '+L:'')})[v]);
+  const cl={1:'caída en <10s',2:'esfuerzo contra gravedad',3:'movimiento en plano',4:'plejia'};
+  const clP={1:'caída en <5s',2:'esfuerzo contra gravedad',3:'movimiento en plano',4:'plejia'};
+  if(n[6]===0&&n[7]===0)P.push('sin claudicación de miembros superiores');
+  else{if(n[6]>0)P.push('miembro superior derecho con '+cl[n[6]]+' ('+n[6]+')');if(n[7]>0)P.push('miembro superior izquierdo con '+cl[n[7]]+' ('+n[7]+')')}
+  if(n[8]===0&&n[9]===0)P.push('sin claudicación de miembros inferiores');
+  else{if(n[8]>0)P.push('miembro inferior derecho con '+clP[n[8]]+' ('+n[8]+')');if(n[9]>0)P.push('miembro inferior izquierdo con '+clP[n[9]]+' ('+n[9]+')')}
+  A(n[10],'no dismetría',v=>({1:'ataxia en una extremidad',2:'ataxia en dos extremidades'})[v]);
+  A(n[11],'sensibilidad conservada',v=>({1:'hipoestesia leve-moderada'+(L?' '+L:''),2:'anestesia'+(L?' '+L:'')})[v]);
+  A(n[12],'lenguaje conservado',v=>({1:'afasia leve-moderada',2:'afasia grave',3:'mutismo/afasia global'})[v]);
+  A(n[13],'no disartria',v=>({1:'disartria leve-moderada',2:'disartria grave/anartria'})[v]);
+  A(n[14],'sin extinción ni inatención',v=>({1:'extinción/inatención parcial (anosognosia)',2:'extinción/inatención completa (anosognosia)'})[v]);
+  return P.length?P.map(capP).join('. ')+'.':'';
+}
+
+/* ===== CONSTRUIR INFORME (estructura Diraya) ===== */
+function build(){
+  const B=[];
+  // ANTECEDENTES PERSONALES
+  const ap=[];
+  if(val('ap_alergias'))ap.push('Alergias: '+val('ap_alergias')+'.');
+  if(val('ap_toxicos'))ap.push('Hábitos tóxicos: '+val('ap_toxicos')+'.');
+  const frv=frvTxt();if(frv)ap.push(frv);
+  if(val('ap_otros'))ap.push(val('ap_otros'));
+  if(ap.length)B.push('ANTECEDENTES PERSONALES\n'+ap.join('\n'));
+  // OTROS ANTECEDENTES
+  const oa=[];
+  if(S.rankin!=='')oa.push('Escala de Rankin previo al ictus: '+S.rankin+'.');
+  if(S.antico&&S.antico!=='Ninguno'){let a='Tratamiento previo: '+S.antico;if(val('ot_antico_det'))a+=' ('+val('ot_antico_det')+')';oa.push(a+'.')}
+  if(val('ot_ttohab'))oa.push('Otros tratamientos: '+val('ot_ttohab'));
+  if(oa.length)B.push('OTROS ANTECEDENTES DE INTERÉS\n'+oa.join('\n'));
+  // ENFERMEDAD ACTUAL
+  const ea=[];
+  if(S.tipoInicio)ea.push('Hora de inicio de síntomas: '+S.tipoInicio+'.');
+  if(val('ea_dia')||val('ea_hora')){const dh=[val('ea_dia'),val('ea_hora')].filter(Boolean).join(' ');ea.push('Día/hora de inicio (o última vez visto bien): '+dh+'.')}
+  if(S.codigo)ea.push('¿Se activó el Código Ictus?: '+S.codigo+'.');
+  if(val('ea_narrativa'))ea.push('\n'+val('ea_narrativa'));
+  const tt=tiemposTxt();if(tt.length)ea.push('\nRESUMEN DE TIEMPOS:\n'+tt.join('\n'));
+  if(ea.length)B.push('ENFERMEDAD ACTUAL\n'+ea.join('\n'));
+  // EXPLORACIÓN
+  const ex=[];
+  const cons=[];
+  if(val('c_tas')&&val('c_tad'))cons.push('TA '+val('c_tas')+'/'+val('c_tad')+' mmHg');
+  if(val('c_gluc'))cons.push('glucemia '+val('c_gluc')+' mg/dl');
+  if(val('c_temp'))cons.push('Tª '+val('c_temp')+'ºC');
+  if(cons.length)ex.push(cons.join(', ')+'.');
+  // prosa cualitativa derivada del NIHSS de llegada
+  const prosa=nihProsa(nihData[0],S.nihLado);
+  if(prosa)ex.push(prosa);
+  if(val('e_txt'))ex.push(val('e_txt'));
+  if(nihTotal(nihData[0])>0)ex.push(nihFmt(nihData[0]));
+  if(ex.length)B.push('EXPLORACIÓN\n'+ex.join('\n'));
+  // PRUEBAS
+  const pr=[];
+  const ekg=[];if(S.ekg)ekg.push(S.ekg);if(val('ekg_otros'))ekg.push(val('ekg_otros'));
+  if(ekg.length)pr.push('EKG: '+ekg.join('. ')+'.');
+  if(S.ni.length)pr.push('Neuroimagen realizada: '+S.ni.join(', ')+'.');
+  if(val('p_tc'))pr.push('TC craneal: '+val('p_tc'));
+  if(val('p_angio'))pr.push('AngioTC: '+val('p_angio'));
+  if(val('p_perf'))pr.push('TC perfusión: '+val('p_perf'));
+  if(val('p_lab'))pr.push('Laboratorio: '+val('p_lab'));
+  if(pr.length)B.push('PRUEBAS COMPLEMENTARIAS\n'+pr.join('\n'));
+  // JUICIO
+  const jc=[];
+  if(S.dx==='isq'){
+    let frase='Ictus isquémico';
+    if(S.isqLado)frase+=' hemisférico '+S.isqLado;
+    if(S.arteria)frase+=' por oclusión de '+S.arteria;
+    if(S.toast){const fem={'Aterotrombótico':'aterotrombótica','Cardioembólico':'cardioembólica','Lacunar':'lacunar','Indeterminado':'indeterminada','Inhabitual':'inhabitual'};frase+=', de etiología '+(fem[S.toast]||S.toast.toLowerCase())}
+    frase+='.';
+    // tratamiento
+    const tr=[];
+    if(S.tratTipo.includes('Fibrinólisis IV'))tr.push('fibrinólisis intravenosa');
+    if(S.tratTipo.includes('Trombectomía mecánica')){let t='trombectomía mecánica';if(S.tratTici)t+=' (TICI '+S.tratTici+')';tr.push(t)}
+    if(tr.length)frase+=' Tratado mediante '+tr.join(' y ')+'.';
+    jc.push(frase);
+  } else if(S.dx==='hem'){
+    let frase='Ictus hemorrágico'+(S.isqLado?' hemisférico '+S.isqLado:'')+'.';
+    jc.push(frase);
+  } else if(S.dx==='ait'){
+    jc.push('Accidente isquémico transitorio.');
+  }
+  if(val('j_txt'))jc.push(val('j_txt'));
+  if(jc.length)B.push('JUICIO CLÍNICO\n'+jc.join('\n'));
+  // PLAN
+  const pl=[];
+  const tri=(k,lbl)=>{const v=S.tri[k];if(v==='si')pl.push(lbl+': Sí.');else if(v==='no')pl.push(lbl+': No.')};
+  tri('pl_antiag','Inicio de antiagregación');
+  tri('pl_antico','Inicio de anticoagulación');
+  tri('pl_ui','Ingreso en Unidad de Ictus');
+  // fibrinólisis
+  if(S.fib){let f='Tratamiento fibrinolítico IV: '+S.fib;if(S.fib==='Sí'){const d=[];if(val('fib_hora'))d.push('inicio '+val('fib_hora'));if(val('fib_dosis'))d.push(val('fib_dosis')+' mg');if(d.length)f+=' ('+d.join(', ')+')'}pl.push(f+'.')}
+  // reperfusión
+  if(S.rep){let r='Reperfusión intra-arterial: '+S.rep;pl.push(r+'.');
+    if(S.rep==='Sí'){
+      if(S.repTipo.length)pl.push('Tipo: '+S.repTipo.join(', ')+'.');
+      if(val('rep_puncion'))pl.push('Punción femoral: '+val('rep_puncion')+'.');
+      if(S.tici)pl.push('Grado de recanalización: TICI '+S.tici+'.');
+      if(val('rep_nihpost'))pl.push('NIHSS post-reperfusión: '+val('rep_nihpost')+'.');
+      if(S.anest)pl.push('Anestesia general: '+S.anest+'.');
+    }}
+  if(val('com_txt'))pl.push('\nComentarios:\n'+val('com_txt'));
+  if(pl.length)B.push('PLAN DE ACTUACIÓN\n'+pl.join('\n'));
+
+  const head='NEUROLOGÍA DE GUARDIA - CÓDIGO ICTUS';
+  const out=sanitize(head+'\n'+'='.repeat(head.length)+'\n\n'+B.join('\n\n'));
+  $('out').textContent=out;
+  if(typeof updateJcVis==='function')updateJcVis();
+  return out;
+}
+function copyAll(){const t=build();navigator.clipboard.writeText(t).then(()=>toast('Copiado')).catch(()=>{const ta=document.createElement('textarea');ta.value=t;document.body.appendChild(ta);ta.select();try{document.execCommand('copy');toast('Copiado')}catch(e){toast('No se pudo copiar')}document.body.removeChild(ta)})}
+function sendSelf(){const t=build();location.href=`mailto:?subject=${encodeURIComponent('Código ictus - guardia')}&body=${encodeURIComponent(t)}`}
+
+/* ===== PERSISTENCIA 5 PACIENTES ===== */
+const KEY='ictus_casos_v2';
+const FIELDS=['f_edad','f_sexo','ap_alergias','ap_toxicos','ap_otros','ot_antico_det','ot_ttohab','ea_dia','ea_hora','ea_narrativa','c_tas','c_tad','c_gluc','c_temp','e_txt','ekg_otros','p_tc','p_angio','p_perf','p_lab','j_txt','fib_hora','fib_dosis','rep_puncion','rep_nihpost','com_txt'];
+function snapshot(){const f={};FIELDS.forEach(id=>f[id]=val(id));return {f,S:JSON.parse(JSON.stringify(S)),crono:JSON.parse(JSON.stringify(crono)),nihData:JSON.parse(JSON.stringify(nihData))}}
+function restore(data){
+  FIELDS.forEach(id=>{if($(id))$(id).value=data.f[id]||''});
+  Object.assign(S,data.S||{});crono=data.crono||{};nihData=data.nihData||[Array(15).fill(0),Array(15).fill(0),Array(15).fill(0)];
+  reflect();buildTstamps();buildNihSerie();buildNihItems();build();
+}
+function reflect(){
+  segPick('ea_tipoInicio',v=>S.tipoInicio=v,()=>S.tipoInicio);
+  segPick('ea_codigo',v=>S.codigo=v,()=>S.codigo);
+  segPick('ekg_ritmo',v=>S.ekg=v,()=>S.ekg);
+  segPick('dx_tipo',v=>{S.dx=v;updateJcVis()},()=>S.dx);
+  segPick('isq_lado',v=>S.isqLado=v,()=>S.isqLado);
+  segPick('trat_tici',v=>S.tratTici=v,()=>S.tratTici);
+  segPick('fib_si',v=>S.fib=v,()=>S.fib);
+  segPick('rep_si',v=>S.rep=v,()=>S.rep);
+  segPick('rep_tici',v=>S.tici=v,()=>S.tici);
+  segPick('rep_anest',v=>S.anest=v,()=>S.anest);
+  segPick('nihLado',v=>S.nihLado=v,()=>S.nihLado);
+  chipSingle('f_rankin',['0','1','2','3','4','5'],v=>S.rankin=v,()=>S.rankin);
+  chipSingle('ot_antico',['Ninguno','Antiagregante','ACOD','AVK'],v=>S.antico=v,()=>S.antico);
+  chipSingle('isq_arteria',['ACI','ACI-ACM (tándem)','ACM-M1','ACM-M2','ACA','ACP','AV','AB','Lacunar'],v=>S.arteria=v,()=>S.arteria);
+  chipSingle('toast',['Aterotrombótico','Cardioembólico','Lacunar','Indeterminado','Inhabitual'],v=>S.toast=v,()=>S.toast);
+  chipMulti('ni_tipos',['TC craneal','AngioTC','TC perfusión','RM craneal','Doppler TSA'],()=>S.ni);
+  chipMulti('trat_tipo',['Fibrinólisis IV','Trombectomía mecánica'],()=>S.tratTipo);
+  chipMulti('rep_tipo',['Trombectomía mecánica','Fibrinólisis intra-arterial'],()=>S.repTipo);
+  buildFRV();buildTris();updateJcVis();
+}
+function load(){try{return JSON.parse(localStorage.getItem(KEY))||[]}catch(e){return []}}
+function store(a){localStorage.setItem(KEY,JSON.stringify(a))}
+function openSheet(){renderSlots();$('sheet').classList.add('show')}
+function closeSheet(){$('sheet').classList.remove('show')}
+function saveCurrent(){
+  const label=(val('patLabel')||'').trim();if(!label){toast('Pon una etiqueta');return}
+  let a=load();const stamp=nowHM();
+  a.unshift({label,stamp,nih:nihTotal(nihData[0]),data:snapshot()});
+  if(a.length>5)a=a.slice(0,5);
+  store(a);$('patLabel').value='';renderSlots();toast('Guardado')
+}
+function nuevoCaso(){if(!confirm('¿Vaciar el caso actual?'))return;FIELDS.forEach(id=>{if($(id))$(id).value=''});Object.assign(S,{rankin:'',tipoInicio:'',codigo:'',antico:'',ekg:'',ni:[],nihLado:'',dx:'',isqLado:'',arteria:'',toast:'',tratTipo:[],tratTici:'',frv:{},tri:{pl_antiag:'',pl_antico:'',pl_ui:''},fib:'',rep:'',repTipo:[],tici:'',anest:''});crono={};nihData=[Array(15).fill(0),Array(15).fill(0),Array(15).fill(0)];nihActive=0;reflect();buildTstamps();buildNihSerie();buildNihItems();build();closeSheet();toast('Caso vacío')}
+function renderSlots(){
+  const a=load();const host=$('slots');host.innerHTML='';
+  if(!a.length){host.innerHTML='<div class="slot"><div class="info"><span style="color:var(--muted)">Sin casos guardados</span></div></div>';return}
+  a.forEach((p,i)=>{const d=document.createElement('div');d.className='slot';
+    d.innerHTML=`<div class="info"><div class="name">${p.label}</div><div class="meta">NIHSS ${p.nih} · ${p.stamp}</div></div><button class="load" data-i="${i}">Cargar</button><button class="del" data-d="${i}">✕</button>`;
+    host.appendChild(d)});
+  host.querySelectorAll('.load').forEach(b=>b.onclick=()=>{const a=load();restore(a[+b.dataset.i].data);closeSheet();toast('Cargado')});
+  host.querySelectorAll('.del').forEach(b=>b.onclick=()=>{let a=load();a.splice(+b.dataset.d,1);store(a);renderSlots()});
+}
+function clearAll(){if(confirm('¿Borrar todos los casos guardados?')){localStorage.removeItem(KEY);renderSlots();toast('Todo borrado')}}
+$('sheet').addEventListener('click',e=>{if(e.target===$('sheet'))closeSheet()});
+$('ea_hora').addEventListener('input',()=>{calcTimes();build()});
+document.querySelectorAll('textarea,input,select').forEach(el=>el.addEventListener('input',()=>{const t=document.querySelector('.tab.active');if(t&&t.id==='informe')build()}));
+
+/* init */
+buildTstamps();buildNihSerie();buildNihItems();build();
+</script>
+</body>
+</html>

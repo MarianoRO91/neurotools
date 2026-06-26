@@ -1,0 +1,730 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Consulta EM — apoyo a la documentación</title>
+<style>
+  :root{
+    --bg:#0f1115; --panel:#171a21; --panel2:#1e222c; --ink:#e6e8ec;
+    --muted:#9aa3b2; --line:#2a2f3a; --accent:#6aa3ff; --accent2:#3d6fd1;
+    --ok:#57c08a; --warn:#e0a85a; --danger:#e06a6a; --mono:ui-monospace,Menlo,Consolas,monospace;
+  }
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--bg);color:var(--ink);font:15px/1.5 system-ui,-apple-system,Segoe UI,Roboto,sans-serif}
+  header{padding:12px 20px;border-bottom:1px solid var(--line);display:flex;align-items:center;gap:14px;flex-wrap:wrap}
+  header h1{font-size:15px;margin:0;font-weight:600}
+  header .note{color:var(--muted);font-size:12px}
+  nav{display:flex;gap:4px;padding:8px 16px;border-bottom:1px solid var(--line);background:var(--panel);flex-wrap:wrap;position:sticky;top:0;z-index:20}
+  nav button{background:transparent;border:1px solid transparent;color:var(--muted);padding:7px 13px;border-radius:8px;cursor:pointer;font-size:14px;font-weight:500}
+  nav button:hover{color:var(--ink);background:var(--panel2)}
+  nav button.active{color:var(--ink);background:var(--panel2);border-color:var(--line)}
+  main{padding:18px;max-width:1180px;margin:0 auto}
+  .tab{display:none}.tab.active{display:block}
+  .grid{display:grid;gap:14px}
+  .g2{grid-template-columns:1fr 1fr}
+  @media(max-width:900px){.g2{grid-template-columns:1fr}}
+  .card{background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:16px;margin-bottom:14px}
+  .card h2{font-size:13px;margin:0 0 12px;color:var(--accent);font-weight:600;text-transform:uppercase;letter-spacing:.5px;display:flex;justify-content:space-between;align-items:center;gap:8px}
+  label{display:block;font-size:12px;color:var(--muted);margin:0 0 4px}
+  input,select,textarea{width:100%;background:var(--panel2);border:1px solid var(--line);color:var(--ink);border-radius:8px;padding:8px 10px;font:inherit}
+  textarea{min-height:64px;resize:vertical}
+  #campos textarea{min-height:96px;line-height:1.45;font-size:14px}
+  #campos textarea.campo-sm{min-height:40px}
+  #campos .row{margin-bottom:8px}
+  #campos label{font-size:11px}
+  #informe .out{min-height:200px;font-size:13px;line-height:1.5}
+  .row{margin-bottom:10px}
+  .secthead{display:flex;justify-content:space-between;align-items:center;gap:8px;margin-bottom:4px}
+  .fs-block{border:1px solid var(--line);border-radius:10px;padding:12px;margin-bottom:10px;background:var(--panel2)}
+  .fs-head{display:flex;justify-content:space-between;align-items:center;margin-bottom:8px}
+  .fs-grade{font-family:var(--mono);font-size:13px;color:var(--accent);background:var(--bg);padding:2px 8px;border-radius:6px;border:1px solid var(--line)}
+  .opt{display:flex;gap:8px;align-items:flex-start;padding:5px 8px;border-radius:6px;cursor:pointer;font-size:13px}
+  .opt:hover{background:var(--bg)}
+  .opt input{width:auto;margin-top:3px}.opt .lab{flex:1}
+  .fs-note{margin-top:8px}
+  .fs-note input{font-size:12px;padding:6px 8px}
+  .scorebar{position:sticky;top:52px;z-index:10;background:linear-gradient(180deg,var(--panel),var(--panel2));border:1px solid var(--line);border-radius:12px;padding:12px 16px;margin-bottom:14px;display:flex;align-items:center;gap:16px;flex-wrap:wrap}
+  .scorebar .big{font-size:26px;font-weight:700;font-family:var(--mono)}
+  .scorebar .fsstring{font-family:var(--mono);font-size:13px;color:var(--muted)}
+  .scorebar .rule{font-size:12px;color:var(--warn);max-width:380px}
+  .btn{background:var(--accent2);border:none;color:#fff;padding:8px 14px;border-radius:8px;cursor:pointer;font:inherit;font-weight:600;font-size:13px}
+  .btn:hover{background:var(--accent)}
+  .btn.ghost{background:transparent;border:1px solid var(--line);color:var(--ink)}
+  .btn.sm{padding:4px 10px;font-size:12px}
+  .out{background:var(--bg);border:1px dashed var(--line);border-radius:10px;padding:14px;font-family:var(--mono);font-size:13px;white-space:pre-wrap;min-height:80px}
+  .pill{display:inline-block;font-size:11px;padding:2px 8px;border-radius:20px;border:1px solid var(--line);color:var(--muted);margin-left:6px}
+  .placeholder{color:var(--warn);font-style:italic;font-size:12px;padding:8px 10px;border:1px dashed var(--warn);border-radius:8px;opacity:.9}
+  .disclaimer{font-size:11px;color:var(--muted);border-top:1px solid var(--line);padding:12px 20px;margin-top:20px;line-height:1.6}
+  .flex{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+  .seg{display:flex;border:1px solid var(--line);border-radius:8px;overflow:hidden}
+  .seg button{background:var(--panel2);border:none;color:var(--muted);padding:8px 16px;cursor:pointer;font:inherit;font-size:14px;border-right:1px solid var(--line);font-weight:600}
+  .seg button:last-child{border-right:none}
+  .seg button.on{background:var(--accent2);color:#fff}
+  .scaleList{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:14px}
+  .scaleList button{background:var(--panel2);border:1px solid var(--line);color:var(--muted);padding:6px 11px;border-radius:20px;cursor:pointer;font-size:13px}
+  .scaleList button.on{background:var(--accent2);color:#fff;border-color:var(--accent2)}
+  .tmpl{border:1px solid var(--line);border-radius:10px;padding:14px;margin-bottom:12px;background:var(--panel2)}
+  .tmpl h3{margin:0 0 2px;font-size:14px;color:var(--ink);display:flex;align-items:center;gap:8px}
+  .tmpl .sub{color:var(--muted);font-size:12px;margin-bottom:10px}
+  .tmpl ul{margin:6px 0;padding-left:18px}.tmpl li{margin:5px 0;font-size:13px}
+  .fixed{color:var(--ok);font-family:var(--mono);font-size:12px}
+  .tag{font-size:10px;padding:1px 7px;border-radius:10px;border:1px solid var(--line);color:var(--muted);font-weight:500;text-transform:uppercase;letter-spacing:.3px}
+  .tag.fija{color:var(--ok);border-color:var(--ok)}
+  .tag.edit{color:var(--warn);border-color:var(--warn)}
+  .dosein{display:inline-block;width:auto;min-width:90px;padding:3px 8px;font-family:var(--mono);font-size:12px;background:var(--bg);border:1px solid var(--accent2);border-radius:5px;color:var(--accent)}
+  .copybtn{cursor:pointer;color:var(--muted);font-size:11px;border:1px solid var(--line);background:transparent;border-radius:6px;padding:3px 9px}
+  .petbtn.peton{background:var(--accent2);color:#fff;border-color:var(--accent2)}
+  .copybtn:hover{color:var(--ink);border-color:var(--accent)}
+  .toast{position:fixed;bottom:20px;left:50%;transform:translateX(-50%);background:var(--ok);color:#06281a;padding:9px 18px;border-radius:8px;font-weight:600;font-size:13px;opacity:0;transition:opacity .2s;pointer-events:none;z-index:50}
+  .toast.show{opacity:1}
+  .mini{font-size:11px;color:var(--muted)}
+  .famhead{font-size:12px;color:var(--accent);text-transform:uppercase;letter-spacing:.5px;margin:16px 0 6px;font-weight:600;border-bottom:1px solid var(--line);padding-bottom:4px}
+  details.fam{border:1px solid var(--line);border-radius:10px;margin-bottom:8px;background:var(--panel);overflow:hidden}
+  details.fam>summary{cursor:pointer;padding:11px 14px;font-weight:600;font-size:14px;color:var(--ink);list-style:none;user-select:none;display:flex;align-items:center;gap:8px}
+  details.fam>summary::-webkit-details-marker{display:none}
+  details.fam>summary::before{content:'▸';color:var(--accent);font-size:12px;transition:transform .15s}
+  details.fam[open]>summary::before{transform:rotate(90deg)}
+  details.fam[open]>summary{border-bottom:1px solid var(--line)}
+  details.fam .tmpl{margin:10px 12px;background:var(--panel2)}
+  .reco{margin-top:8px;padding-top:8px;border-top:1px dotted var(--line);user-select:none}
+  .reco ul{margin:0;padding-left:16px}
+  .reco li{font-size:12px;color:var(--muted);margin:3px 0}
+  .esquema{font-size:13px;color:var(--ink)}
+  .planbox{width:100%;min-height:58px;background:var(--bg);border:1px solid var(--accent2);border-radius:8px;color:var(--ink);padding:8px 10px;font:inherit;font-size:13px;line-height:1.4;resize:vertical}
+  .planbox:focus{outline:none;border-color:var(--accent)}
+  .edss-layout{display:grid;grid-template-columns:340px 1fr;gap:14px;align-items:start}
+  @media(max-width:820px){.edss-layout{grid-template-columns:1fr}}
+  .bodycard{position:sticky;top:120px}
+  #bodymap svg{width:100%;height:auto;display:block;margin-top:6px}
+  .zone{fill:var(--panel2);stroke:var(--line);stroke-width:1.5;cursor:pointer;transition:fill .12s,stroke .12s}
+  .zone:hover{fill:#26303f;stroke:var(--accent)}
+  .zone.active{fill:rgba(106,163,255,.28);stroke:var(--accent);stroke-width:2}
+  .zone.hasnote{fill:rgba(87,192,138,.30);stroke:var(--ok);stroke-width:2}
+  .zlabel{font-size:9px;fill:var(--muted);pointer-events:none;text-anchor:middle;font-family:system-ui}
+  .zpop{margin-top:10px;padding:12px;border:1px solid var(--accent);border-radius:10px;background:var(--panel2)}
+  .zpop h4{margin:0 0 8px;font-size:13px;color:var(--accent)}
+  .zpop .fsel{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:8px}
+  .zpop .fsel button{background:var(--bg);border:1px solid var(--line);color:var(--muted);border-radius:6px;padding:4px 9px;font-size:11px;cursor:pointer}
+  .zpop .fsel button.on{background:var(--accent2);color:#fff;border-color:var(--accent2)}
+  .zpop input{font-size:13px}
+</style>
+</head>
+<body>
+<header>
+  <h1>Consulta EM <span class="pill">determinista · 100% local · sin IA</span></h1>
+  <span class="note">Ningún dato sale del navegador · Esquemas verificados con ficha técnica EMA/AEMPS · Verificar siempre antes de prescribir</span>
+</header>
+
+<nav>
+  <button data-tab="informe" class="active">Informe</button>
+  <button data-tab="edss">EDSS</button>
+  <button data-tab="escalas">Escalas EM</button>
+  <button data-tab="tme">TME</button>
+  <button data-tab="sintomatico">Sintomático</button>
+</nav>
+
+<main>
+
+<!-- ================= INFORME ================= -->
+<section class="tab active" id="informe">
+  <div class="flex" style="margin-bottom:14px">
+    <div class="seg" id="tipoInforme">
+      <button data-tipo="inicial" class="on">Informe inicial</button>
+      <button data-tipo="evolutivo">Informe evolutivo</button>
+    </div>
+    <span class="mini" id="tipoHint">Primera valoración: estructura estándar de consulta.</span>
+  </div>
+  <div class="grid g2">
+    <div>
+      <div class="card">
+        <h2>Datos estructurados <button class="btn ghost sm" onclick="limpiarInforme()">Limpiar</button></h2>
+        <div id="campos"></div>
+        <button class="btn" onclick="genInforme()">Generar informe</button>
+      </div>
+    </div>
+    <div>
+      <div class="card">
+        <h2>Informe <button class="copybtn" onclick="copyText(buildInforme(),this)">copiar todo</button></h2>
+        <div class="out" id="out_informe">Elige tipo de informe, rellena y pulsa «Generar».</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ================= EDSS ================= -->
+<section class="tab" id="edss">
+  <div class="scorebar">
+    <div><div class="mini">EDSS estimado</div><div class="big" id="EDSS_v">0.0</div></div>
+    <div class="fsstring" id="EDSS_fs"></div>
+    <div class="rule" id="EDSS_rule">Selecciona grados.</div>
+    <button class="copybtn" onclick="copyEDSS()">copiar línea EDSS</button>
+    <button class="copybtn" onclick="insertEDSS()">↑ volcar a informe</button>
+  </div>
+  <div class="card"><h2>Deambulación / marcha <span class="mini" style="text-transform:none;letter-spacing:0">(domina ≥4.0)</span></h2>
+    <select id="EDSS_amb" onchange="calcEDSS()">
+      <option value="full">Sin limitación</option>
+      <option value="500">≈500 m sin ayuda ni descanso</option>
+      <option value="300">≈300 m sin ayuda</option>
+      <option value="200">≈200 m sin ayuda</option>
+      <option value="100">≈100 m sin ayuda</option>
+      <option value="u100">≈100 m con ayuda unilateral</option>
+      <option value="u50">≈50 m con ayuda unilateral</option>
+      <option value="b120">≈120 m con ayuda bilateral</option>
+      <option value="b10">≈10 m con ayuda bilateral</option>
+      <option value="wheel">Silla de ruedas autopropulsada</option>
+      <option value="wheeldep">Silla, dependiente de transferencias</option>
+      <option value="bed">Encamado, conserva funciones de brazos</option>
+      <option value="bedtotal">Encamado, dependiente total</option>
+    </select>
+  </div>
+  <div id="edss_fs"></div>
+  <p class="placeholder">Derivación según lógica Neurostatus para el tramo bajo; ≥4.0 domina la deambulación. Cada sistema admite NOTA CUALITATIVA libre (p.ej. «P2: debilidad MSD 4+/5»). La nota viaja en la línea copiada y al informe. Revisa la derivación 3.0–4.5 según el estándar de tu unidad.</p>
+</section>
+
+<!-- ================= ESCALAS EM ================= -->
+<section class="tab" id="escalas">
+  <div class="scaleList" id="scaleTabs"></div>
+  <div id="scaleHost"></div>
+</section>
+
+<!-- ================= TME ================= -->
+<section class="tab" id="tme">
+  <div class="card" style="background:var(--panel2)">
+    <h2>Tratamientos modificadores de la enfermedad</h2>
+    <p class="mini">Cada fármaco trae un plan prerellenado (esquema verificado con ficha técnica EMA/AEMPS, orientativo) que puedes editar; tus cambios se guardan. Al copiar se vuelca solo el plan. Las recomendaciones (cribado, vacunación, monitorización) quedan debajo y no se copian. <b>Revisa y valida cada dosis antes de prescribir.</b></p>
+    <div class="flex" style="margin-top:8px"><button class="btn ghost sm" onclick="resetDoses()">Restaurar planes por defecto</button></div>
+  </div>
+  <div id="tmeHost"></div>
+</section>
+
+<!-- ================= SINTOMÁTICO ================= -->
+<section class="tab" id="sintomatico">
+  <div class="card" style="background:var(--panel2)">
+    <h2>Tratamiento sintomático en EM</h2>
+    <p class="mini">Planes prerellenados con pautas habituales, editables (tus cambios se guardan). Al copiar se vuelca solo el plan. Las advertencias quedan debajo y no se copian. Algunos son uso fuera de indicación en EM. Revisa cada dosis antes de prescribir.</p>
+  </div>
+  <div id="sintHost"></div>
+</section>
+
+</main>
+
+<div class="disclaimer">
+  Herramienta de apoyo a la documentación en consulta de EM. No sustituye el juicio clínico ni la ficha técnica vigente. Esquemas posológicos verificados con EMA/AEMPS (CIMA) en la fecha de elaboración; pueden cambiar — verificar antes de prescribir. EDSS estimado y auditable, no oficial. Procesamiento y almacenamiento 100% local (este navegador); ningún dato se transmite fuera del dispositivo.
+</div>
+<div class="toast" id="toast"></div>
+
+<script>
+function $(id){return document.getElementById(id)}
+function sanitizeDiraya(s){
+  return (s||'')
+    .replace(/→/g,'->').replace(/←/g,'<-')
+    .replace(/≥/g,'>=').replace(/≤/g,'<=')
+    .replace(/—/g,'-').replace(/–/g,'-')
+    .replace(/·/g,'-').replace(/•/g,'-')
+    .replace(/×/g,'x')
+    .replace(/[“”]/g,'"').replace(/[‘’]/g,"'")
+    .replace(/…/g,'...');
+}
+function toast(m){const t=$('toast');t.textContent=m;t.classList.add('show');setTimeout(()=>t.classList.remove('show'),1200)}
+function copyText(t,btn){navigator.clipboard.writeText(t).then(()=>{toast('Copiado');if(btn){const o=btn.textContent;btn.textContent='✓';setTimeout(()=>btn.textContent=o,900)}})}
+document.querySelectorAll('nav button').forEach(b=>{b.onclick=()=>{document.querySelectorAll('nav button').forEach(x=>x.classList.remove('active'));document.querySelectorAll('.tab').forEach(x=>x.classList.remove('active'));b.classList.add('active');$(b.dataset.tab).classList.add('active')}});
+
+/* ===== INFORME inicial / evolutivo ===== */
+const PC_INI='- RM (/):\n- LCR (/):\n- AS (/):';
+const PC_EVO='- RM (/):\n- AS (/):\n- sNfL (/):';
+const CAMPOS_INI=[
+  ['motivo','Motivo de consulta','MOTIVO DE CONSULTA',true],
+  ['ant','Antecedentes','ANTECEDENTES'],
+  ['ttohab','Tratamiento habitual','TRATAMIENTO HABITUAL'],
+  ['actual','Enfermedad actual','ENFERMEDAD ACTUAL'],
+  ['expl','Exploración','EXPLORACIÓN'],
+  ['pc','Pruebas complementarias','PRUEBAS COMPLEMENTARIAS'],
+  ['jc','Juicio clínico','JUICIO CLÍNICO',true],
+  ['plan','Plan','PLAN'],
+];
+const CAMPOS_EVO=[
+  ['resumen','Resumen','RESUMEN',true],
+  ['dmt','DMT actual','TRATAMIENTO MODIFICADOR (DMT)'],
+  ['ttohab','Resto del tratamiento habitual','RESTO DEL TRATAMIENTO HABITUAL'],
+  ['evolucion','Evolución','EVOLUCIÓN'],
+  ['expl','Exploración (incluye EDSS y escalas)','EXPLORACIÓN'],
+  ['pc','Pruebas complementarias','PRUEBAS COMPLEMENTARIAS'],
+  ['jc','Juicio clínico','JUICIO CLÍNICO',true],
+  ['plan','Plan','PLAN'],
+];
+let tipoActual='inicial';
+$('tipoInforme').querySelectorAll('button').forEach(b=>{
+  b.onclick=()=>{$('tipoInforme').querySelectorAll('button').forEach(x=>x.classList.remove('on'));b.classList.add('on');tipoActual=b.dataset.tipo;
+    $('tipoHint').textContent=tipoActual==='inicial'?'Primera valoración: estructura estándar de consulta.':'Seguimiento: evolución, exploración (EDSS y escalas), pruebas, juicio y plan.';
+    renderCampos();}
+});
+function curCampos(){return tipoActual==='inicial'?CAMPOS_INI:CAMPOS_EVO}
+function renderCampos(){
+  const cc=$('campos');cc.innerHTML='';
+  curCampos().forEach(c=>{
+    const d=document.createElement('div');d.className='row';
+    const small=c[3]?' campo-sm':'';
+    let extraBtns='';
+    if(c[0]==='ttohab'){extraBtns=`<button class="copybtn" onclick="formatTto()">formatear</button>`}
+    if(c[0]==='resumen'){extraBtns=`<span id="resumenBtns"></span>`}
+    if(c[0]==='pc'){extraBtns=`<span id="pcBtns"></span>`}
+    if(c[0]==='plan'){extraBtns=`<span id="planBtns"></span>`}
+    d.innerHTML=`<div class="secthead"><label style="margin:0">${c[1]}</label><span class="btns">${extraBtns}<button class="copybtn" onclick="copyText(($('i_${c[0]}').value||'').trim(),this)">copiar</button></span></div><textarea id="i_${c[0]}" class="${small}"></textarea>`;
+    cc.appendChild(d);
+  });
+  buildResumenBtns();
+  buildPcBtns();
+  buildPlanBtns();
+  // precargar DMT y Evolución automáticamente en el evolutivo
+  if(tipoActual!=='inicial'){
+    if($('i_dmt')&&!$('i_dmt').value)$('i_dmt').value=DMT_TXT;
+    if($('i_evolucion')&&!$('i_evolucion').value)$('i_evolucion').value=EVOL_TXT;
+  }
+  genInforme();
+}
+/* Resumen: subtipo de EM + año de inicio */
+const SUBTIPOS=['EMRR','EMSP activa','EMSP no activa','EMPP','CIS','RIS'];
+function buildResumenBtns(){
+  const host=$('resumenBtns');if(!host)return;
+  let html=SUBTIPOS.map(s=>`<button class="copybtn" onclick="setResumen('${s}')">${s}</button>`).join('');
+  html+=` <input id="resAnio" type="text" style="width:64px;padding:3px 6px" placeholder="año">`;
+  host.innerHTML=html;
+}
+function setResumen(subtipo){
+  const el=$('i_resumen');if(!el)return;
+  const anio=($('resAnio')?$('resAnio').value:'').trim()||'X';
+  el.value=`En seguimiento por ${subtipo} de inicio en el año ${anio}.`;
+  genInforme();
+}
+/* Bloques fijos precargados */
+const DMT_TXT=`DMT actual: 
+- Adherencia y tolerancia: buena
+- Efectos adversos / Infecciones intercurrentes: niega`;
+const EVOL_TXT=`
+- ¿Sospecha de brote desde última revisión?: no
+- Quejas cognitivas: niega
+- Fatiga: niega
+- Ánimo/sueño: bien de ánimo, duerme bien
+- Problemas visuales: niega
+- Déficit motor / Torpeza manual / Espasticidad: niega
+- Déficit sensitivo: niega
+- Marcha (distancia máxima / tropiezos): marcha no restringida
+- Esfínteres (urinario / fecal / sexual): niega
+- Otros síntomas: niega
+
+Actividad física habitual: `;
+/* Pruebas complementarias con fecha (botón junto a PC) */
+const PRUEBAS_PC=['RM','RM medular','Analítica','LCR','sNfL','PEV','OCT'];
+const MESES=['Ene','Feb','Mar','Abr','May','Jun','Jul','Ago','Sep','Oct','Nov','Dic'];
+function buildPcBtns(){
+  const host=$('pcBtns');if(!host)return;
+  const now=new Date();const mDef=MESES[now.getMonth()]+'/'+String(now.getFullYear()).slice(2);
+  let html=PRUEBAS_PC.map(p=>`<button class="copybtn" onclick="addPrueba('${p}')">${p}</button>`).join('');
+  html+=` <input id="pcFecha" type="text" value="${mDef}" style="width:64px;padding:3px 6px" placeholder="mes/aa">`;
+  host.innerHTML=html;
+}
+function addPrueba(p){
+  const el=$('i_pc');if(!el)return;
+  const f=($('pcFecha')?$('pcFecha').value:'').trim();
+  const linea=f?`- ${p} (${f}): `:`- ${p} (): `;
+  const lines=(el.value||'').split('\n');
+  if(lines.some(l=>l.startsWith(`- ${p} (${f}):`))){toast('Ya añadida');return;}
+  el.value=(el.value?el.value.replace(/\s*$/,'')+'\n':'')+linea;
+  genInforme();el.focus();el.selectionStart=el.selectionEnd=el.value.length;
+}
+/* Peticiones frecuentes en EM + revisión */
+const PETICIONES=['RM craneal','RM medular','Analítica','Neurofilamentos (sNfL)','Punción lumbar','Potenciales evocados','OCT'];
+let _petSel=[];
+function buildPlanBtns(){
+  const host=$('planBtns');if(!host)return;
+  _petSel=[];
+  let html=PETICIONES.map(p=>`<button class="copybtn petbtn" data-p="${p}" onclick="togglePeticion(this)">${p}</button>`).join('');
+  html+=` <span style="display:inline-flex;align-items:center;gap:4px"><button class="copybtn" onclick="addRevision()">Revisión</button><input id="revMeses" type="number" min="1" style="width:48px;padding:3px 6px" placeholder="m"></span>`;
+  host.innerHTML=html;
+}
+function togglePeticion(btn){
+  const p=btn.dataset.p;
+  const i=_petSel.indexOf(p);
+  if(i>=0){_petSel.splice(i,1);btn.classList.remove('peton')}
+  else{_petSel.push(p);btn.classList.add('peton')}
+  syncPeticiones();
+}
+function syncPeticiones(){
+  const el=$('i_plan');if(!el)return;
+  let lines=(el.value||'').split('\n').filter(l=>!/^[-\s]*Se solicita:/.test(l));
+  if(_petSel.length)lines.push('- Se solicita: '+_petSel.join(', '));
+  el.value=lines.filter(l=>l.trim()).join('\n');
+  genInforme();
+}
+function addRevision(){
+  const m=$('revMeses')?$('revMeses').value:'';
+  const txt=m?`Revisión en ${m} meses`:'Revisión';
+  const el=$('i_plan');if(el){el.value=(el.value?el.value+'\n':'')+dashify(txt);genInforme();toast('Añadido a Plan')}
+}
+function dashify(txt){return (txt||'').split('\n').map(l=>{l=l.trim();if(!l)return '';return l.startsWith('-')?l:'- '+l;}).filter(Boolean).join('\n');}
+/* Parser de tratamiento habitual (Receta XXI + texto libre) */
+const TTONORM={
+  'ACETILSALICILICO ACIDO':'AAS','ACIDO ACETILSALICILICO':'AAS',
+  'AMILORIDA CLORHIDRATO':'Amilorida','AMILORIDA':'Amilorida',
+  'VALSARTAN':'Valsartán','LOSARTAN':'Losartán','CANDESARTAN':'Candesartán','IRBESARTAN':'Irbesartán','TELMISARTAN':'Telmisartán',
+  'RAMIPRIL':'Ramipril','ENALAPRIL':'Enalapril','LISINOPRIL':'Lisinopril',
+  'ATORVASTATINA':'Atorvastatina','SIMVASTATINA':'Simvastatina','ROSUVASTATINA':'Rosuvastatina',
+  'BISOPROLOL':'Bisoprolol','METFORMINA':'Metformina','LEVOTIROXINA':'Levotiroxina','PANTOPRAZOL':'Pantoprazol',
+  'DUTASTERIDA':'Dutasterida','TAMSULOSINA':'Tamsulosina','FORMODUAL':'Formodual','OMEPRAZOL':'Omeprazol',
+  'PARACETAMOL':'Paracetamol','PROPRANOLOL':'Propranolol','PREGABALINA':'Pregabalina','PENTOXIFILINA':'Pentoxifilina','METAMIZOL':'Metamizol','DIAZEPAM':'Diazepam','DICLOFENACO':'Diclofenaco','MACROGOL':'Macrogol','ESCOPOLAMINA BUTILBROMURO':'Escopolamina','GABAPENTINA':'Gabapentina','LACOSAMIDA':'Lacosamida','LEVETIRACETAM':'Levetiracetam','TOPIRAMATO':'Topiramato','AMITRIPTILINA':'Amitriptilina','DULOXETINA':'Duloxetina',
+};
+function capFirst(s){return s.charAt(0).toUpperCase()+s.slice(1).toLowerCase()}
+function normName(n){
+  n=n.trim().replace(/\s+/g,' ');const up=n.toUpperCase();
+  if(TTONORM[up])return TTONORM[up];
+  if(/\bACIDO\b/.test(up)){const base=up.replace(/\bACIDO\b/,'').trim();return 'Ácido '+base.charAt(0)+base.slice(1).toLowerCase();}
+  return capFirst(n);
+}
+function esRecetaXXI(t){return /\|Financiado\||V[ÍI]A ORAL\)|cargar I\||Deshacer Detalle/.test(t)}
+function cleanNum(v){var n=parseFloat(String(v).replace(',','.'));if(isNaN(n))return v;return Number.isInteger(n)?String(n):String(n).replace('.',',');}
+function enemaName(frag){
+  if(/FOSFATO/i.test(frag))return 'Enema de fosfato';
+  if(/MACROGOL/i.test(frag))return 'Enema de macrogol';
+  if(/GLICERINA|GLICEROL/i.test(frag))return 'Enema de glicerina';
+  const m=frag.match(/\b(?!SODIO|POTASIO|CLORURO|FOSFATO|BICARBONATO)([A-ZÁÉÍÓÚÑ]{4,})/);
+  return 'Enema'+(m?' de '+m[1].charAt(0).toUpperCase()+m[1].slice(1).toLowerCase():'');
+}
+const ION_RX=/^(POTASIO|SODIO|CLORURO|BICARBONATO|FOSFATO|CITRATO|MAGNESIO|CALCIO|HIDROGENO)/i;
+function parseReceta(raw){
+  raw=raw.replace(/\r/g,' ');
+  const pautaRe=/\((\d+)\s*[A-ZÁÉÍÓÚ]+\s*\/\s*(\d+)\s*([hd])[^)]*?V[ÍI]A[^)]*?\)/gi;
+  let matches=[...raw.matchAll(pautaRe)];
+  if(!matches.length)return '';
+  const result=[];
+  for(let i=0;i<matches.length;i++){
+    const horas=matches[i][2];const unidad=matches[i][3].toLowerCase();
+    const ini=matches[i].index+matches[i][0].length;
+    const fin=(i+1<matches.length)?matches[i+1].index:raw.length;
+    let bloque=raw.slice(ini,fin);
+    const esEnema=/V[ÍI]A RECTAL|ENEMA/i.test(matches[i][0]+bloque);
+    let fin2=bloque.search(/\|No financiado\||\|Financiado\|/i);if(fin2===-1)fin2=bloque.length;
+    let frag=bloque.slice(0,fin2);
+    let md=frag.match(/d[ií]as\s+([\s\S]+)$/i);if(md)frag=md[1];
+    frag=frag.trim();
+    frag=frag.replace(/,\s*\d+\s*(COMPRIMIDOS?|CAPSULAS?|SOBRES?|AMPOLLAS?|VIALES?|ENEMAS?|ML).*$/i,'');
+    frag=frag.replace(/\s+1\s+(INHALADOR|ENEMA)[\s\S]*$/i,'');
+    frag=frag.replace(/\s+\d+\s+(DOSIS|UNIDADES|ML)[\s\S]*$/i,'');
+    frag=frag.replace(/\(POR ENEMA\)/i,'').replace(/\(D\.?O\.?E\.?\)/i,'');
+    frag=frag.trim();
+    if(!frag)continue;
+    let linea;
+    if(esEnema){
+      linea=enemaName(frag);
+    } else if(/^[A-ZÁÉÍÓÚÑ ]+\s+[\d.,]+\/[\d.,]+\s*MC?G/i.test(frag)){
+      const mm=frag.match(/^([A-ZÁÉÍÓÚÑ][A-ZÁÉÍÓÚÑ ]+?)\s+([\d.,]+\/[\d.,]+)\s*(MCG|MG)/i);
+      linea=mm?normName(mm[1].trim())+' '+mm[2]+' '+mm[3].toLowerCase():'[?] '+frag;
+    } else {
+      let partes=frag.split(/\s*\/\s*/);
+      if(partes.length>=3 && partes.slice(1).some(p=>ION_RX.test(p.trim()))){
+        const dm=partes[0].match(/(.+?)([\d.,]+)\s*(MG|MCG|G|UI)/i);
+        if(dm)linea=normName(dm[1].trim())+' '+cleanNum(dm[2])+' '+dm[3].toLowerCase();
+        else linea=normName(partes[0].trim());
+      } else {
+        linea=partes.map(p=>{
+          const dm=p.match(/(.+?)([\d.,]+)\s*(MG|MCG|G|UI)\b/i);
+          if(dm){let nombre=normName(dm[1].replace(/CLORHIDRATO|BROMHIDRATO|MALEATO|BESILATO|SODICO|CALCICO|HEMIFUMARATO|FUMARATO|MESILATO|SUCCINATO|BUTILBROMURO/gi,'').trim());return nombre+' '+cleanNum(dm[2])+' '+dm[3].toLowerCase();}
+          return normName(p.trim());
+        }).join(' / ');
+      }
+    }
+    const pauta=' cada '+horas+(unidad==='d'?' días':'h');
+    result.push(linea+pauta);
+  }
+  return result.join(', ');
+}
+function parseTto(){
+  const raw=($('i_ttohab').value||'').trim();if(!raw)return '';
+  if(esRecetaXXI(raw)){const r=parseReceta(raw);if(r)return r;}
+  const entradas=raw.split(/[,\n;]+/).map(x=>x.trim()).filter(Boolean);
+  return entradas.map(e=>parseLinea(e)).join(', ');
+}
+function parseLinea(e){
+  let s=e.replace(/\s+/g,' ').trim();
+  const doseRe=/(\d+(?:[.,]\d+)?)\s*(mg|g|mcg|µg|ug|ui|u|ml|%)\b/i;
+  let dose='';const dm=s.match(doseRe);
+  if(dm){dose=dm[1].replace(',','.')+' '+dm[2].toLowerCase().replace('ug','mcg').replace('µg','mcg');}
+  let pauta='';
+  const pp=s.match(/(\d+(?:[.,]\d+)?|½|media|medio)\s*-\s*(\d+(?:[.,]\d+)?|½|media|medio)\s*-\s*(\d+(?:[.,]\d+)?|½|media|medio)(?:\s*-\s*(\d+(?:[.,]\d+)?|½|media|medio))?/i);
+  if(pp){pauta=pp[0].replace(/\s*-\s*/g,'-').replace(/media|medio/gi,'½');}
+  else{const ph=s.match(/(?:cada\s*)?\/?\s*(\d+)\s*h(?:oras)?\b/i);if(ph)pauta='cada '+ph[1]+'h';}
+  const mods=[];
+  if(/si\s*precisa|s\.?p\.?\b|a demanda/i.test(s))mods.push('si precisa');
+  if(/en ayunas/i.test(s))mods.push('en ayunas');
+  if(/con\s+(?:las\s+)?comidas?/i.test(s))mods.push('con las comidas');
+  if(/noche|nocturn/i.test(s)&&!pauta)mods.push('por la noche');
+  let nombre=s.replace(doseRe,'').replace(/(\d+(?:[.,]\d+)?|½|media|medio)\s*-\s*(\d+(?:[.,]\d+)?|½|media|medio)\s*-\s*(\d+(?:[.,]\d+)?|½|media|medio)(?:\s*-\s*\S+)?/i,'').replace(/(?:cada\s*)?\/?\s*\d+\s*h(?:oras)?\b/i,'').replace(/si\s*precisa|s\.?p\.?\b|a demanda|en ayunas|con\s+(?:las\s+)?comidas?|por la noche|noche|nocturn\w*/ig,'').replace(/\s+/g,' ').trim();
+  if(!nombre)return '[?] '+e;
+  nombre=capFirst(nombre);
+  let res=nombre;
+  if(dose)res+=' '+dose;
+  if(pauta)res+=' '+pauta;
+  if(mods.length)res+=' '+mods.join(', ');
+  if(!dose&&!pauta&&!mods.length)return '[?] '+capFirst(e);
+  return res;
+}
+function formatTto(){const r=parseTto();if(r){$('i_ttohab').value=r;genInforme();toast('Tratamiento formateado')}}
+function v(id){const el=$(id);return el?(el.value||'').trim():''}
+function buildInforme(){
+  const head=tipoActual==='inicial'?'INFORME INICIAL - CONSULTA DE ENFERMEDADES DESMIELINIZANTES':'INFORME EVOLUTIVO - CONSULTA DE ENFERMEDADES DESMIELINIZANTES';
+  let L=[head,'='.repeat(head.length)];
+  curCampos().forEach(c=>{const val=v('i_'+c[0]);if(val)L.push('\n'+c[2]+'\n'+val)});
+  return sanitizeDiraya(L.join('\n'));
+}
+function genInforme(){$('out_informe').textContent=buildInforme()}
+function limpiarInforme(){curCampos().forEach(c=>{const el=$('i_'+c[0]);if(el)el.value=''});genInforme()}
+renderCampos();
+
+/* ===== EDSS con notas cualitativas ===== */
+const SF=[
+  {k:'V',name:'Visual (óptico)',g:['normal','escotoma o AV >20/30','peor ojo 20/30-20/59','peor ojo escotoma grande o 20/60-20/99','peor ojo 20/100-20/200 o hemianopsia','peor ojo <20/200','grado 5 + mejor ojo ≤20/60']},
+  {k:'TE',name:'Tronco del encéfalo',g:['normal','solo signos','nistagmo moderado u otra discapacidad leve','nistagmo grave, paresia EO marcada o discapacidad moderada de otros pares','disartria marcada u otra discapacidad marcada','incapacidad para tragar o hablar']},
+  {k:'P',name:'Piramidal',g:['normal','signos sin discapacidad','discapacidad mínima','para/monoparesia leve-moderada','paraparesia/hemiparesia marcada o monoplejia','paraplejia/hemiplejia/tetraparesia marcada','tetraplejia']},
+  {k:'C',name:'Cerebeloso',g:['normal','signos sin discapacidad','ataxia leve','ataxia troncal/de miembros moderada','ataxia grave (todos los miembros)','no ejecuta movimientos coordinados']},
+  {k:'S',name:'Sensitivo',g:['normal','solo signos en 1-2 miembros','disminución leve táctil/dolor/posición o vibratoria moderada en 1-2 miembros','disminución moderada o leve en 3-4 miembros','disminución marcada o moderada en >2 miembros','pérdida sensitiva esencial 1-2 miembros','pérdida esencial por debajo de la cabeza']},
+  {k:'Esf',name:'Esfínteres (vejiga/intestino)',g:['normal','urgencia/retención leve sin incontinencia','urgencia/retención moderada o incontinencia rara','incontinencia frecuente','sondaje casi constante','pérdida de función vesical','pérdida vesical e intestinal']},
+  {k:'Cog',name:'Cognición (mental)',g:['normal','alteración del ánimo aislada','disminución cognitiva leve','disminución moderada','disminución marcada','demencia/síndrome cerebral crónico grave']},
+];
+const st={};SF.forEach(s=>st[s.k]=0);
+const notes={};SF.forEach(s=>notes[s.k]='');
+const cont=$('edss_fs');
+SF.forEach(s=>{
+  const b=document.createElement('div');b.className='fs-block';
+  let opts=s.g.map((lab,grade)=>`<label class="opt"><input type="radio" name="sf_${s.k}" value="${grade}" ${grade===0?'checked':''}><span class="lab"><b>${grade}</b> — ${lab}</span></label>`).join('');
+  b.innerHTML=`<div class="fs-head"><b>${s.name}</b><span class="fs-grade" id="grade_${s.k}">${s.k} 0</span></div>${opts}
+    <div class="fs-note"><input type="text" id="note_${s.k}" placeholder="Nota cualitativa (p.ej. debilidad MSD 4+/5, dismetría izda…)"></div>`;
+  b.querySelectorAll('input[type=radio]').forEach(inp=>inp.onchange=()=>{st[s.k]=+inp.value;$('grade_'+s.k).textContent=s.k+' '+inp.value;calcEDSS()});
+  cont.appendChild(b);
+  b.querySelector('#note_'+s.k).oninput=e=>{notes[s.k]=e.target.value.trim();calcEDSS()};
+});
+function lowEDSS(grades){
+  const max=Math.max(...grades),c=g=>grades.filter(x=>x===g).length;
+  const n1=c(1),n2=c(2),n3=c(3),n4=c(4);let e=0,r='';
+  if(max===0){e=0;r='Todos los SF en 0 → 0.0'}
+  else if(max===1){if(n1===1){e=1;r='1 SF grado 1 → 1.0'}else{e=1.5;r=n1+' SF grado 1 → 1.5'}}
+  else if(max===2){if(n2===1){e=2;r='1 SF grado 2 → 2.0'}else if(n2===2){e=2.5;r='2 SF grado 2 → 2.5'}else if(n2<=4){e=3;r=n2+' SF grado 2 → 3.0'}else{e=3.5;r=n2+' SF grado 2 → 3.5'}}
+  else if(max===3){if(n3===1){if(n2===0){e=3;r='1 SF grado 3 → 3.0'}else if(n2<=2){e=3.5;r='1 grado 3 + '+n2+' grado 2 → 3.5'}else{e=4;r='1 grado 3 + ≥3 grado 2 → 4.0 (revisar deambulación)'}}else if(n3===2){e=3.5;r='2 SF grado 3 → 3.5'}else{e=4;r=n3+' SF grado 3 → 4.0 (revisar deambulación)'}}
+  else if(max===4){if(n4===1){e=4;r='1 SF grado 4 → 4.0 (revisar deambulación)'}else{e=4.5;r=n4+' SF grado 4 → ≥4.5 (deambulación)'}}
+  else{e=5;r='SF grado ≥5 → ≥5.0 (deambulación/clínica)'}
+  return{e,r};
+}
+const AMB={full:null,'500':{e:4,r:'≈500 m sin ayuda → ≥4.0'},'300':{e:4.5,r:'≈300 m → ≥4.5'},'200':{e:5,r:'≈200 m → ≥5.0'},'100':{e:5.5,r:'≈100 m → ≥5.5'},u100:{e:6,r:'100 m ayuda unilateral → 6.0'},u50:{e:6.5,r:'50 m ayuda unilateral → 6.5'},b120:{e:6.5,r:'120 m ayuda bilateral → 6.5'},b10:{e:7,r:'10 m ayuda bilateral → 7.0'},wheel:{e:7,r:'silla autopropulsada → ≥7.0'},wheeldep:{e:7.5,r:'silla dependiente → 7.5'},bed:{e:8,r:'encamado conserva brazos → 8.0'},bedtotal:{e:8.5,r:'encamado dependiente → ≥8.5'}};
+function calcEDSS(){
+  const grades=SF.map(s=>st[s.k]);const lo=lowEDSS(grades);const am=AMB[$('EDSS_amb').value];
+  let e=lo.e,r=lo.r;if(am&&am.e>e){e=am.e;r=am.r+' (deambulación domina)'}else if(am){r=lo.r+' · deambulación compatible'}
+  $('EDSS_v').textContent=e.toFixed(1);
+  const fsShort=SF.map(s=>s.k+st[s.k]).join(' ');
+  $('EDSS_fs').textContent=fsShort;$('EDSS_rule').textContent=r;
+  const noteList=SF.filter(s=>notes[s.k]).map(s=>`${s.k}${st[s.k]}: ${notes[s.k]}`);
+  window._EDSS_short=`EDSS ${e.toFixed(1)} (${fsShort})`;
+  window._EDSS_full=`EDSS ${e.toFixed(1)} (${fsShort})`+(noteList.length?'\n  '+noteList.join('\n  '):'');
+}
+calcEDSS();
+function copyEDSS(){copyText(window._EDSS_full||'EDSS —')}
+function insertEDSS(){const el=$('i_expl');if(el){el.value=(el.value?el.value+'\n':'')+sanitizeDiraya(window._EDSS_full);genInforme();toast('EDSS volcado al informe')}else toast('Abre la pestaña Informe primero')}
+
+/* ===== ESCALAS EM (SDMT, T25FW, 9HPT) ===== */
+const EMSCALES={};
+EMSCALES.SDMT={name:'SDMT',build:host=>{
+  numScale(host,'SDMT','Symbol Digit Modalities Test','Aciertos en 90 s',n=>`SDMT: ${n} aciertos/90 s`,'Comparar con basal y normativa por edad/escolaridad. ↓≥4 puntos sugiere deterioro relevante (orientativo).');
+}};
+EMSCALES.T25FW={name:'T25 pies',build:host=>{
+  pairScale(host,'T25FW','Timed 25-Foot Walk','Dos ensayos cronometrados de 7,62 m (s)','s',(a,b)=>{const m=(a&&b)?((a+b)/2).toFixed(1):(a||b||'—');return `T25FW: ${a||'—'} s / ${b||'—'} s (media ${m} s)`},'Promediar 2 ensayos. ↑≥20% respecto a basal = empeoramiento.');
+}};
+EMSCALES.NHPT={name:'9 palitos (9HPT)',build:host=>{
+  quadScale(host,'NHPT','Nine-Hole Peg Test (9HPT)','Dos ensayos por mano (s)',(d1,d2,i1,i2)=>{const md=(d1&&d2)?((d1+d2)/2).toFixed(1):'—';const mi=(i1&&i2)?((i1+i2)/2).toFixed(1):'—';return `9HPT — Dcha: ${md} s (media) · Izda: ${mi} s (media)`},'Dos ensayos por mano. ↑≥20% sobre basal = empeoramiento.');
+}};
+function numScale(host,abbr,title,lab,fmt,note){
+  const wrap=document.createElement('div');wrap.className='card';
+  wrap.innerHTML=`<h2>${title} <span style="margin-left:auto;display:flex;gap:6px"><button class="copybtn bcopy">copiar</button><button class="copybtn bvolcar">↑ informe</button></span></h2>
+   <div class="scorebar"><div class="fsstring" id="${abbr}_r" style="font-size:15px;color:var(--accent)">—</div></div>
+   <div class="row"><label>${lab}</label><input type="number" min="0" id="${abbr}_n" style="max-width:160px"></div>
+   <p class="mini">${note}</p>`;
+  host.appendChild(wrap);
+  const inp=wrap.querySelector('#'+abbr+'_n');
+  function upd(){const n=+inp.value||0;const r=fmt(n);wrap.querySelector('#'+abbr+'_r').textContent=r;window['_'+abbr]=r}
+  inp.oninput=upd;
+  wrap.querySelector('.bcopy').onclick=e=>copyText(window['_'+abbr]||title,e.target);
+  wrap.querySelector('.bvolcar').onclick=e=>insertScale(window['_'+abbr]||title,e.target);
+  upd();
+}
+function pairScale(host,abbr,title,lab,unit,fmt,note){
+  const wrap=document.createElement('div');wrap.className='card';
+  wrap.innerHTML=`<h2>${title} <span style="margin-left:auto;display:flex;gap:6px"><button class="copybtn bcopy">copiar</button><button class="copybtn bvolcar">↑ informe</button></span></h2>
+   <div class="scorebar"><div class="fsstring" id="${abbr}_r" style="font-size:15px;color:var(--accent)">—</div></div>
+   <div class="flex"><div class="row" style="flex:1"><label>Ensayo 1 (${unit})</label><input type="number" step="0.1" id="${abbr}_a"></div>
+   <div class="row" style="flex:1"><label>Ensayo 2 (${unit})</label><input type="number" step="0.1" id="${abbr}_b"></div></div>
+   <p class="mini">${note}</p>`;
+  host.appendChild(wrap);
+  function upd(){const a=+wrap.querySelector('#'+abbr+'_a').value||0,b=+wrap.querySelector('#'+abbr+'_b').value||0;const r=fmt(a,b);wrap.querySelector('#'+abbr+'_r').textContent=r;window['_'+abbr]=r}
+  wrap.querySelectorAll('input').forEach(i=>i.oninput=upd);
+  wrap.querySelector('.bcopy').onclick=e=>copyText(window['_'+abbr]||title,e.target);
+  wrap.querySelector('.bvolcar').onclick=e=>insertScale(window['_'+abbr]||title,e.target);
+  upd();
+}
+function quadScale(host,abbr,title,lab,fmt,note){
+  const wrap=document.createElement('div');wrap.className='card';
+  wrap.innerHTML=`<h2>${title} <span style="margin-left:auto;display:flex;gap:6px"><button class="copybtn bcopy">copiar</button><button class="copybtn bvolcar">↑ informe</button></span></h2>
+   <div class="scorebar"><div class="fsstring" id="${abbr}_r" style="font-size:14px;color:var(--accent)">—</div></div>
+   <div class="flex"><div class="row" style="flex:1"><label>Dcha ensayo 1 (s)</label><input type="number" step="0.1" id="${abbr}_d1"></div>
+   <div class="row" style="flex:1"><label>Dcha ensayo 2 (s)</label><input type="number" step="0.1" id="${abbr}_d2"></div></div>
+   <div class="flex"><div class="row" style="flex:1"><label>Izda ensayo 1 (s)</label><input type="number" step="0.1" id="${abbr}_i1"></div>
+   <div class="row" style="flex:1"><label>Izda ensayo 2 (s)</label><input type="number" step="0.1" id="${abbr}_i2"></div></div>
+   <p class="mini">${note}</p>`;
+  host.appendChild(wrap);
+  function upd(){const g=id=>+wrap.querySelector('#'+abbr+'_'+id).value||0;const r=fmt(g('d1'),g('d2'),g('i1'),g('i2'));wrap.querySelector('#'+abbr+'_r').textContent=r;window['_'+abbr]=r}
+  wrap.querySelectorAll('input').forEach(i=>i.oninput=upd);
+  wrap.querySelector('.bcopy').onclick=e=>copyText(window['_'+abbr]||title,e.target);
+  wrap.querySelector('.bvolcar').onclick=e=>insertScale(window['_'+abbr]||title,e.target);
+  upd();
+}
+function insertScale(txt,btn){const el=$('i_expl');if(el){el.value=(el.value?el.value+'\n':'')+sanitizeDiraya(txt);genInforme();toast('Volcado a Exploración')}else toast('Abre la pestaña Informe primero')}
+const EMORDER=['SDMT','T25FW','NHPT'];
+const est=$('scaleTabs'),esh=$('scaleHost');
+EMORDER.forEach((key,i)=>{
+  const b=document.createElement('button');b.textContent=EMSCALES[key].name;if(i===0)b.classList.add('on');
+  b.onclick=()=>{document.querySelectorAll('#scaleTabs button').forEach(x=>x.classList.remove('on'));b.classList.add('on');esh.innerHTML='';EMSCALES[key].build(esh)};
+  est.appendChild(b);
+});
+EMSCALES.SDMT.build(esh);
+
+/* ===== Tratamientos: plan editable prerellenado + recomendaciones (no copiable) ===== */
+/* plan: texto por defecto verificado/orientativo, editable y persistente. Solo el plan se copia/vuelca. */
+function planBox(id,def){
+  const saved=localStorage.getItem('em_'+id);
+  const val=(saved!==null?saved:def);
+  return `<textarea class="planbox" data-plan="${id}" data-def="${encodeURIComponent(def)}">${val.replace(/</g,'&lt;')}</textarea>`;
+}
+function bindPlans(scope){
+  scope.querySelectorAll('[data-plan]').forEach(t=>{
+    t.oninput=()=>localStorage.setItem('em_'+t.dataset.plan,t.value);
+  });
+}
+function resetDoses(){
+  if(confirm('¿Restaurar todos los planes a sus valores por defecto y borrar tus ediciones?')){
+    Object.keys(localStorage).filter(k=>k.startsWith('em_')).forEach(k=>localStorage.removeItem(k));
+    renderTME();renderSint();
+  }
+}
+
+/* ===== TME por familias (esquemas verificados EMA/AEMPS) ===== */
+const TME=[
+ {fam:'Inyectables clásicos (plataforma)',items:[
+   {n:'Interferón beta-1a IM (Avonex)',plan:`INTERFERÓN BETA-1A 30 µg intramuscular una vez por semana.`,reco:['Hemograma, transaminasas y TSH basal y periódico.','Síntomas pseudogripales: premedicar con paracetamol/AINE. Cribar depresión.']},
+   {n:'Interferón beta-1a SC (Rebif)',plan:`INTERFERÓN BETA-1A 44 µg subcutáneo tres veces por semana.`,reco:['Escalada inicial 8,8 → 22 → 44 µg las primeras semanas.','Hemograma, transaminasas y TSH basal y periódico. Rotar puntos de inyección.']},
+   {n:'Interferón beta-1b SC (Betaferon/Extavia)',plan:`INTERFERÓN BETA-1B 250 µg subcutáneo en días alternos.`,reco:['Hemograma, transaminasas y TSH basal y periódico.']},
+   {n:'Peginterferón beta-1a (Plegridy)',plan:`PEGINTERFERÓN BETA-1A 125 µg subcutáneo cada 2 semanas.`,reco:['Titulación inicial 63 → 94 → 125 µg.','Misma monitorización que interferones.']},
+   {n:'Acetato de glatiramero (Copaxone)',plan:`ACETATO DE GLATIRAMERO 40 mg subcutáneo tres veces por semana.`,reco:['Alternativa: 20 mg SC/día.','No precisa monitorización analítica específica.','Reacción post-inyección (rubor, opresión torácica) benigna y autolimitada: informar.']},
+ ]},
+ {fam:'Orales',items:[
+   {n:'Teriflunomida (Aubagio)',plan:`TERIFLUNOMIDA 14 mg vía oral una vez al día.`,reco:['TERATÓGENO: anticoncepción eficaz en ambos sexos. Eliminación acelerada con colestiramina si embarazo/toxicidad.','Transaminasas basal y mensual los primeros 6 meses; vigilar TA. Cribado TBC/serologías.']},
+   {n:'Dimetilfumarato (Tecfidera)',plan:`DIMETILFUMARATO 120 mg cada 12 horas vía oral durante 7 días; después 240 mg cada 12 horas.`,reco:['Hemograma con linfocitos basal y cada 3 meses (riesgo LMP si linfopenia grave prolongada).','Flushing/molestias GI al inicio: tomar con comida, valorar AAS.']},
+   {n:'Diroximel fumarato (Vumerity)',plan:`DIROXIMEL FUMARATO 231 mg cada 12 horas vía oral durante 7 días; después 462 mg cada 12 horas.`,reco:['Misma vigilancia de linfocitos que DMF; mejor tolerancia GI.']},
+   {n:'Fingolimod (Gilenya)',plan:`FINGOLIMOD 0,5 mg vía oral una vez al día.`,reco:['1ª dosis monitorizada 6 h (bradicardia/BAV); ECG basal.','OCT basal y a los 3-4 meses (edema macular). Serología VVZ: vacunar si seronegativo. Hemograma y transaminasas.']},
+   {n:'Siponimod (Mayzent)',plan:`SIPONIMOD: titulación 0,25 mg días 1-2 → 0,5 mg día 3 → 0,75 mg día 4 → 1,25 mg día 5 → mantenimiento 2 mg al día.`,reco:['Dosis de mantenimiento 1 mg/día si genotipo CYP2C9*2*3. GENOTIPADO CYP2C9 OBLIGATORIO; contraindicado en *3*3.','1ª dosis monitorizada si cardiopatía. OCT, hemograma, transaminasas, VVZ. Indicación: EMSP activa.']},
+   {n:'Ozanimod (Zeposia)',plan:`OZANIMOD: 0,23 mg días 1-4 → 0,46 mg días 5-7 → 0,92 mg al día de mantenimiento.`,reco:['Función hepática y ECG basal; OCT; serología VVZ. Precaución con IMAO/tiramina.']},
+   {n:'Ponesimod (Ponvory)',plan:`PONESIMOD: envase de inicio con titulación de 2 a 10 mg en 14 días; mantenimiento 20 mg al día.`,reco:['1ª dosis monitorizada si cardiopatía. Función hepática, OCT, VVZ. Reiniciar titulación si se omiten ≥4 dosis.']},
+   {n:'Cladribina oral (Mavenclad)',plan:`CLADRIBINA: dosis acumulada 3,5 mg/kg en 2 años (1,75 mg/kg al año). Cada año, 2 semanas de tratamiento (en el mes 1 y el mes 2), número de comprimidos según peso. Sin tratamiento en los años 3 y 4.`,reco:['Cribado VIH/VHB/VHC y TBC; RM basal (<3 meses).','Linfocitos antes de cada ciclo (≥1000 año 1; ≥800 año 2).','Anticoncepción ambos sexos durante y 6 meses tras la dosis. Vacunación previa (incl. VVZ); evitar vivas. Profilaxis herpética si linfopenia grado ≥3.']},
+ ]},
+ {fam:'Anti-CD20',items:[
+   {n:'Ocrelizumab (Ocrevus)',plan:`OCRELIZUMAB: dosis inicial 300 mg intravenoso y 300 mg intravenoso separados 2 semanas; después 600 mg intravenoso cada 6 meses.`,reco:['Cribado VHB (AgHBs y anti-HBc) obligatorio; VHC/VIH; TBC. Vacunación al día antes de iniciar.','Inmunoglobulinas basales y en seguimiento (hipogammaglobulinemia). EMR y EMPP temprana.']},
+   {n:'Ublituximab (Briumvi)',plan:`UBLITUXIMAB: 150 mg intravenoso el día 1 → 450 mg intravenoso el día 15 → 450 mg intravenoso cada 24 semanas.`,reco:['Mismo cribado anti-CD20: VHB/VHC/VIH, TBC, vacunación previa. Inmunoglobulinas en seguimiento.']},
+   {n:'Ofatumumab (Kesimpta)',plan:`OFATUMUMAB: 20 mg subcutáneo en las semanas 0, 1 y 2; después 20 mg subcutáneo mensual desde la semana 4.`,reco:['Mismo cribado anti-CD20: VHB/VHC/VIH, TBC, vacunación previa. Autoadministración SC domiciliaria.']},
+ ]},
+ {fam:'Otros de alta eficacia',items:[
+   {n:'Natalizumab (Tysabri)',plan:`NATALIZUMAB 300 mg intravenoso cada 4 semanas.`,reco:['Existe formulación SC 300 mg/4 sem; valorar intervalo extendido cada 6 sem en seleccionados.','Serología JCV con índice antes y periódicamente: clave para riesgo de LMP.','Estratificar riesgo LMP (índice JCV, duración, inmunosupresión previa). RM de vigilancia.']},
+   {n:'Alemtuzumab (Lemtrada)',plan:`ALEMTUZUMAB: ciclo 1 = 12 mg al día intravenoso durante 5 días; ciclo 2 (a los 12 meses) = 12 mg al día intravenoso durante 3 días.`,reco:['Monitorización mensual 48 meses tras la última dosis: hemograma (PTI), creatinina y orina (anti-MBG), TSH.','Profilaxis antiherpética. Cribado VHB/VHC/VIH/TBC/VPH; vacunación (incl. VVZ) ≥6 semanas antes.']},
+ ]},
+];
+function renderTME(){
+  const host=$('tmeHost');host.innerHTML='';
+  TME.forEach(group=>{
+    const det=document.createElement('details');det.className='fam';
+    const sum=document.createElement('summary');sum.textContent=group.fam;det.appendChild(sum);
+    group.items.forEach(it=>{
+      const d=document.createElement('div');d.className='tmpl';
+      const id='tme_'+it.n.replace(/[^A-Za-z]/g,'').slice(0,18);
+      const reco=(it.reco||[]).map(x=>`<li>${x}</li>`).join('');
+      d.innerHTML=`<h3>${it.n} <span style="margin-left:auto;display:flex;gap:6px"><button class="copybtn" onclick="copyPlan(this)">copiar plan</button><button class="copybtn" onclick="insertPlan(this)">↑ plan a informe</button></span></h3>
+        ${planBox(id,it.plan)}
+        ${reco?`<div class="reco"><ul>${reco}</ul></div>`:''}`;
+      det.appendChild(d);
+    });
+    host.appendChild(det);
+  });
+  bindPlans(host);
+}
+function copyPlan(btn){
+  const t=btn.closest('.tmpl');
+  const txt=t.querySelector('[data-plan]').value.trim();
+  copyText(txt,btn);
+}
+function insertPlan(btn){
+  const t=btn.closest('.tmpl');
+  const txt=t.querySelector('[data-plan]').value.trim();
+  const el=$('i_plan');
+  if(el){el.value=(el.value?el.value+'\n':'')+sanitizeDiraya(dashify(txt));genInforme();toast('Plan volcado a Plan')}else toast('Abre la pestaña Informe primero');
+}
+renderTME();
+
+/* ===== SINTOMÁTICO: planes editables prerellenados ===== */
+const SINT=[
+ {fam:'Espasticidad',items:[
+   {n:'Baclofeno',plan:`BACLOFENO: iniciar 5 mg cada 8 horas. Subir 5 mg por toma cada 3 días según respuesta y tolerancia. Rango habitual 30-60 mg al día.`,reco:['Máximo 80 mg/día. Retirar de forma gradual, no suspender bruscamente.','Vigilar sedación y debilidad.']},
+   {n:'Tizanidina',plan:`TIZANIDINA: iniciar 2 mg por la noche; subir de 2 en 2 mg cada 3-4 días hasta 6-24 mg al día repartidos.`,reco:['Máximo 36 mg/día. Vigilar hipotensión y transaminasas.','Contraindicada con ciprofloxacino o fluvoxamina.']},
+   {n:'Cannabinoide THC:CBD',plan:`CANNABINOIDE THC:CBD (vía oromucosa): titulación progresiva durante 14 días según tolerancia, hasta un máximo de 12 pulsaciones al día.`,reco:['Indicado en espasticidad moderada-grave refractaria a otros fármacos.','Reevaluar la respuesta a las 4 semanas. Vigilar mareo, somnolencia y efectos psicoactivos.']},
+ ]},
+ {fam:'Fatiga',items:[
+   {n:'Amantadina',plan:`AMANTADINA 100 mg por la mañana. Puede añadirse una toma adicional a mediodía. Evitar la toma nocturna porque puede causar insomnio.`,reco:['Vigilar livedo reticularis y edemas.']},
+   {n:'Modafinilo',plan:`MODAFINILO: iniciar 100 mg por la mañana; puede aumentarse a 200 mg al día según respuesta.`,reco:['Uso fuera de indicación en EM. Valorar somnolencia diurna asociada.','Interacción con anticonceptivos orales.']},
+   {n:'Medidas no farmacológicas',plan:`Ejercicio físico moderado de forma regular, acorde a sus posibilidades. Higiene de sueño.\nEl calor no es perjudicial para la evolución de su enfermedad, pero puede empeorar transitoriamente algunos síntomas (fatiga, o reaparición pasajera de síntomas que recuerden a brotes previos). Si esto ocurre, tomar medidas para protegerse del calor.\nPara la urgencia o las pérdidas de orina: evitar beber agua en exceso por la noche y repartir la ingesta a lo largo del día; reducir la cafeína, el alcohol y las bebidas carbonatadas, que son irritantes para la vejiga.`,reco:['Cribar y tratar contribuyentes a la fatiga: depresión, hipotiroidismo, anemia, déficit de vitamina D, trastornos del sueño.']},
+ ]},
+ {fam:'Dolor neuropático / paroxístico',items:[
+   {n:'Gabapentina',plan:`GABAPENTINA: 300 mg por la noche los días 1-3 → 300 mg cada 12 horas los días 4-6 → 300 mg cada 8 horas desde el día 7. Subir 300 mg cada 3-7 días según respuesta hasta 900-1800 mg al día.`,reco:['Máximo 3600 mg/día. Ajuste de dosis en enfermedad renal crónica.','Vigilar sedación, mareo, edemas.']},
+   {n:'Pregabalina',plan:`PREGABALINA: iniciar 75 mg cada 12 horas; subir hasta 150-300 mg cada 12 horas según respuesta y tolerancia.`,reco:['Ajuste en enfermedad renal crónica. Vigilar sedación y aumento de peso.']},
+   {n:'Duloxetina',plan:`DULOXETINA 60 mg, 1 comprimido por la mañana. Esta medicación puede tardar hasta 3-4 semanas en empezar a hacer efecto.`,reco:['Vigilar náuseas iniciales, TA. Precaución al combinar con otros serotoninérgicos.']},
+   {n:'Amitriptilina',plan:`AMITRIPTILINA 25 mg, 1 comprimido por la noche. Esta medicación puede tardar hasta 3-4 semanas en empezar a hacer efecto.`,reco:['Efectos anticolinérgicos; precaución en mayores y cardiopatía. Puede ayudar si hay insomnio asociado.']},
+   {n:'Carbamazepina (neuralgia del trigémino)',plan:`CARBAMAZEPINA: iniciar 100 mg cada 12 horas; subir 100-200 mg cada 1-2 días hasta control del dolor. Rango habitual 600-1200 mg al día repartidos.`,reco:['Vigilar hiponatremia y hemograma. HLA-B*1502 en poblaciones de riesgo. Inductor enzimático con múltiples interacciones.']},
+   {n:'Eslicarbazepina',plan:`ESLICARBAZEPINA: iniciar 400 mg al día; subir hasta 800-1200 mg al día en toma única según respuesta.`,reco:['Vigilar hiponatremia. Mejor perfil de interacciones que carbamazepina.']},
+   {n:'Lacosamida',plan:`LACOSAMIDA: iniciar 50 mg cada 12 horas; subir según respuesta hasta 100-200 mg cada 12 horas.`,reco:['Vigilar mareo y prolongación del PR (ECG basal si cardiopatía).']},
+ ]},
+ {fam:'Disfunción vesical',items:[
+   {n:'Anticolinérgicos (vejiga hiperactiva)',plan:`SOLIFENACINA 5 mg al día, u OXIBUTININA 5 mg cada 8-12 horas.`,reco:['Puede subirse solifenacina a 10 mg/día si precisa.','Descartar residuo posmiccional elevado antes; vigilar retención. Efectos anticolinérgicos, precaución cognitiva en mayores.']},
+   {n:'Mirabegrón',plan:`MIRABEGRÓN 50 mg al día.`,reco:['Reducir a 25 mg/día en insuficiencia renal o hepática. Vigilar TA. Menos efectos anticolinérgicos.']},
+   {n:'Cateterismo intermitente',plan:`Cateterismo vesical intermitente limpio, con frecuencia según el residuo posmiccional.`,reco:['Valorar con urología/rehabilitación. Educación al paciente o cuidador.']},
+ ]},
+ {fam:'Marcha / temblor',items:[
+   {n:'Fampridina (mejora de la marcha)',plan:`FAMPRIDINA 10 mg cada 12 horas vía oral.`,reco:['Comprimidos de liberación prolongada. Contraindicada con antecedente de convulsiones o ERC significativa.','Test de marcha basal; suspender si no hay respuesta a las 2-4 semanas.']},
+   {n:'Temblor',plan:`Ensayo terapéutico según el tipo: PROPRANOLOL 10-40 mg cada 8 horas, o CLONAZEPAM 0,5 mg por la noche, o PRIMIDONA a dosis bajas con titulación lenta.`,reco:['Eficacia farmacológica limitada. Valorar rehabilitación; casos seleccionados a cirugía funcional.']},
+ ]},
+ {fam:'Brote agudo',items:[
+   {n:'Corticoide oral en brote (Solu-Moderin)',plan:`Se le entregarán viales de METILPREDNISOLONA 500 mg (Solu-Moderin). Disolver 1000 mg (2 viales) en 1 litro de leche, agua o zumo bajo en azúcar y tomar a sorbos lentos durante 45 minutos por la mañana, durante 3 días.\nTomar OMEPRAZOL 20 mg, 1 comprimido por la mañana mientras tome los corticoides.`,reco:['Vigilar glucemia, TA e insomnio. Descartar infección activa antes de iniciar.']},
+ ]},
+];
+function renderSint(){
+  const host=$('sintHost');host.innerHTML='';
+  SINT.forEach(group=>{
+    const det=document.createElement('details');det.className='fam';
+    const sum=document.createElement('summary');sum.textContent=group.fam;det.appendChild(sum);
+    group.items.forEach(it=>{
+      const d=document.createElement('div');d.className='tmpl';
+      const id='sint_'+it.n.replace(/[^A-Za-z]/g,'').slice(0,18);
+      const reco=(it.reco||[]).map(x=>`<li>${x}</li>`).join('');
+      d.innerHTML=`<h3>${it.n} <span style="margin-left:auto;display:flex;gap:6px"><button class="copybtn" onclick="copyPlan(this)">copiar plan</button><button class="copybtn" onclick="insertPlan(this)">↑ plan a informe</button></span></h3>
+        ${planBox(id,it.plan)}
+        ${reco?`<div class="reco"><ul>${reco}</ul></div>`:''}`;
+      det.appendChild(d);
+    });
+    host.appendChild(det);
+  });
+  bindPlans(host);
+}
+renderSint();
+</script>
+</body>
+</html>
