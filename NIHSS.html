@@ -32,6 +32,10 @@
   .item{background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:12px;margin-bottom:10px}
   .item .lab{font-weight:600;font-size:14px;margin-bottom:8px}
   .item .lab .pts{float:right;font-family:var(--mono);color:var(--accent);font-size:13px}
+  .ladoItem{display:inline-flex;border:1px solid var(--line);border-radius:7px;overflow:hidden;margin:0 0 8px}
+  .ladoItem button{background:var(--panel2);border:none;color:var(--muted);padding:5px 12px;cursor:pointer;font:inherit;font-size:12px;border-right:1px solid var(--line);font-weight:600}
+  .ladoItem button:last-child{border-right:none}
+  .ladoItem button.on{background:var(--accent2);color:#fff}
   .opts{display:flex;flex-direction:column;gap:5px}
   .opts button{text-align:left;background:var(--panel2);border:1px solid var(--line);color:var(--ink);border-radius:9px;padding:9px 11px;font:inherit;font-size:13px;cursor:pointer;display:flex;gap:9px;align-items:flex-start;line-height:1.35}
   .opts button .n{font-family:var(--mono);font-weight:700;color:var(--muted);min-width:18px}
@@ -72,10 +76,6 @@
 </header>
 
 <main>
-  <div class="ladoRow">
-    <label>Lado afecto (orienta mirada, campos, facial, sensibilidad)</label>
-    <div class="seg" id="nihLado"><button data-v="der">Derecho</button><button data-v="izq">Izquierdo</button><button data-v="" class="on">—</button></div>
-  </div>
   <div id="items"></div>
   <div class="outlabel">Exploración cualitativa</div>
   <div class="out" id="outProsa"></div>
@@ -125,7 +125,8 @@ const NIH_ITEMS=[
  ['11 Extinción e inatención (anosognosia)','0 normal · 1 parcial · 2 completa',2],
 ];
 let sel=NIH_ITEMS.map(()=>0);
-let lado='';
+const L={mirada:'',campos:'',facial:'',sensib:''};
+const LADO_ITEM={3:'mirada',4:'campos',5:'facial',11:'sensib'}; // índice de ítem -> clave de lado
 
 function render(){
   const host=$('items');host.innerHTML='';
@@ -133,20 +134,19 @@ function render(){
     const d=document.createElement('div');d.className='item';
     const descs=it[1].split(' · ');
     const opts=[];for(let v=0;v<=it[2];v++)opts.push(`<button data-i="${i}" data-v="${v}" class="${sel[i]===v?'on':''}"><span class="n">${v}</span><span>${(descs[v]||'').replace(/^\d+\s/,'')}</span></button>`);
-    d.innerHTML=`<div class="lab">${it[0]}<span class="pts" id="pts_${i}">${sel[i]}</span></div><div class="opts">${opts.join('')}</div>`;
+    let ladoSel='';
+    if(LADO_ITEM[i]){const k=LADO_ITEM[i];ladoSel=`<div class="ladoItem" data-lk="${k}"><button data-l="der" class="${L[k]==='der'?'on':''}">Dcha</button><button data-l="izq" class="${L[k]==='izq'?'on':''}">Izda</button><button data-l="" class="${L[k]===''?'on':''}">—</button></div>`;}
+    d.innerHTML=`<div class="lab">${it[0]}<span class="pts" id="pts_${i}">${sel[i]}</span></div>${ladoSel}<div class="opts">${opts.join('')}</div>`;
     host.appendChild(d);
   });
-  host.querySelectorAll('button').forEach(b=>b.onclick=()=>{
+  host.querySelectorAll('.opts button').forEach(b=>b.onclick=()=>{
     const i=+b.dataset.i;sel[i]=+b.dataset.v;
     const item=host.querySelectorAll('.item')[i];
-    item.querySelectorAll('button').forEach(x=>x.classList.remove('on'));
+    item.querySelectorAll('.opts button').forEach(x=>x.classList.remove('on'));
     b.classList.add('on');$('pts_'+i).textContent=sel[i];
     update();
   });
-  $('nihLado').querySelectorAll('button').forEach(b=>b.onclick=()=>{
-    $('nihLado').querySelectorAll('button').forEach(x=>x.classList.remove('on'));
-    b.classList.add('on');lado=b.dataset.v;update();
-  });
+  host.querySelectorAll('.ladoItem').forEach(grp=>{const k=grp.dataset.lk;grp.querySelectorAll('button').forEach(b=>b.onclick=()=>{grp.querySelectorAll('button').forEach(x=>x.classList.remove('on'));b.classList.add('on');L[k]=b.dataset.l;update();})});
   update();
 }
 function total(){return sel.reduce((a,b)=>a+b,0)}
@@ -155,16 +155,20 @@ function fmt(){return `${sel.slice(0,5).join('+')}\n${sel.slice(5,10).join('+')}
 
 /* prosa cualitativa: descripción + (puntuación); normales en estilo cribado */
 function capP(s){return s.charAt(0).toUpperCase()+s.slice(1)}
-function nihProsa(n,lado){
-  const L=lado==='der'?'derecha':lado==='izq'?'izquierda':'';
+function lt(l){return l==='der'?'derecha':l==='izq'?'izquierda':''}
+function nihProsa(n,L){
+  L=L||{};
   const P=[];
   const A=(v,norm,desc)=>{if(v===0){if(norm)P.push(norm)}else{P.push(desc(v)+' ('+v+')')}};
   A(n[0],'alerta',v=>({1:'somnoliento',2:'obnubilado',3:'coma'})[v]);
   A(n[1],'responde mes y edad',v=>({1:'responde una pregunta',2:'no responde mes ni edad'})[v]);
   A(n[2],'obedece órdenes',v=>({1:'obedece una orden',2:'no obedece órdenes'})[v]);
-  A(n[3],'MOEs sin restricción',v=>({1:'paresia parcial de la mirada',2:'desviación forzada'+(L?' a la '+L:'')})[v]);
-  A(n[4],'campos por confrontación normales',v=>({1:'hemianopsia parcial'+(L?' '+L:''),2:'hemianopsia completa'+(L?' '+L:''),3:'hemianopsia bilateral'})[v]);
-  A(n[5],'no asimetría facial',v=>({1:'paresia facial menor'+(L?' '+L:''),2:'paresia facial parcial'+(L?' '+L:''),3:'paresia facial completa'+(L?' '+L:'')})[v]);
+  const lm=lt(L.mirada);
+  A(n[3],'MOEs sin restricción',v=>({1:'paresia parcial de la mirada',2:'desviación forzada de la mirada'+(lm?' a la '+lm:'')})[v]);
+  const lc=lt(L.campos);
+  A(n[4],'campos por confrontación normales',v=>({1:'hemianopsia parcial'+(lc?' '+lc:''),2:'hemianopsia completa'+(lc?' '+lc:''),3:'hemianopsia bilateral'})[v]);
+  const lf=lt(L.facial);
+  A(n[5],'no asimetría facial',v=>({1:'paresia facial menor'+(lf?' '+lf:''),2:'paresia facial parcial'+(lf?' '+lf:''),3:'paresia facial completa'+(lf?' '+lf:'')})[v]);
   const cl={1:'caída en <10s',2:'esfuerzo contra gravedad',3:'movimiento en plano',4:'plejia'};
   const clP={1:'caída en <5s',2:'esfuerzo contra gravedad',3:'movimiento en plano',4:'plejia'};
   if(n[6]===0&&n[7]===0)P.push('sin claudicación de miembros superiores');
@@ -172,7 +176,8 @@ function nihProsa(n,lado){
   if(n[8]===0&&n[9]===0)P.push('sin claudicación de miembros inferiores');
   else{if(n[8]>0)P.push('miembro inferior derecho con '+clP[n[8]]+' ('+n[8]+')');if(n[9]>0)P.push('miembro inferior izquierdo con '+clP[n[9]]+' ('+n[9]+')')}
   A(n[10],'no dismetría',v=>({1:'ataxia en una extremidad',2:'ataxia en dos extremidades'})[v]);
-  A(n[11],'sensibilidad conservada',v=>({1:'hipoestesia leve-moderada'+(L?' '+L:''),2:'anestesia'+(L?' '+L:'')})[v]);
+  const ls=lt(L.sensib);
+  A(n[11],'sensibilidad conservada',v=>({1:'hipoestesia leve-moderada'+(ls?' '+ls:''),2:'anestesia'+(ls?' '+ls:'')})[v]);
   A(n[12],'lenguaje conservado',v=>({1:'afasia leve-moderada',2:'afasia grave',3:'mutismo/afasia global'})[v]);
   A(n[13],'no disartria',v=>({1:'disartria leve-moderada',2:'disartria grave/anartria'})[v]);
   A(n[14],'sin extinción ni inatención',v=>({1:'extinción/inatención parcial (anosognosia)',2:'extinción/inatención completa (anosognosia)'})[v]);
@@ -181,16 +186,16 @@ function nihProsa(n,lado){
 function update(){
   $('total').textContent=total();
   $('sev').textContent=severidad(total());
-  $('outProsa').textContent=nihProsa(sel,lado)||'(sin hallazgos)';
+  $('outProsa').textContent=nihProsa(sel,L)||'(sin hallazgos)';
   $('out').textContent=fmt();
 }
-function copyText(){return (nihProsa(sel,lado)?nihProsa(sel,lado)+'\n':'')+fmt()}
+function copyText(){return (nihProsa(sel,L)?nihProsa(sel,L)+'\n\n':'')+fmt()}
 function copyOut(){const t=copyText();navigator.clipboard.writeText(t).then(()=>toast('Copiado')).catch(()=>{
   const ta=document.createElement('textarea');ta.value=t;document.body.appendChild(ta);ta.select();
   try{document.execCommand('copy');toast('Copiado')}catch(e){toast('No se pudo copiar')}
   document.body.removeChild(ta);
 })}
-function resetCalc(){sel=NIH_ITEMS.map(()=>0);lado='';$('nihLado').querySelectorAll('button').forEach(b=>b.classList.toggle('on',b.dataset.v===''));render();toast('Limpiado')}
+function resetCalc(){sel=NIH_ITEMS.map(()=>0);L.mirada='';L.campos='';L.facial='';L.sensib='';render();toast('Limpiado')}
 
 /* ===== 5 pacientes ===== */
 const KEY='nihss_pacientes';
@@ -204,7 +209,7 @@ function saveCurrent(){
   let arr=load();
   const now=new Date();
   const stamp=now.toLocaleDateString('es-ES',{day:'2-digit',month:'2-digit'})+' '+now.toLocaleTimeString('es-ES',{hour:'2-digit',minute:'2-digit'});
-  arr.unshift({label,sel:[...sel],lado,total:total(),stamp});
+  arr.unshift({label,sel:[...sel],L:{...L},total:total(),stamp});
   if(arr.length>5)arr=arr.slice(0,5);
   store(arr);$('patLabel').value='';renderSlots();toast('Guardado');
 }
@@ -218,7 +223,7 @@ function renderSlots(){
       <button class="del" data-d="${idx}">✕</button>`;
     host.appendChild(d);
   });
-  host.querySelectorAll('.load').forEach(b=>b.onclick=()=>{const arr=load();const p=arr[+b.dataset.i];sel=[...p.sel];lado=p.lado||'';$('nihLado').querySelectorAll('button').forEach(x=>x.classList.toggle('on',x.dataset.v===lado));render();closeSheet();toast('Cargado')});
+  host.querySelectorAll('.load').forEach(b=>b.onclick=()=>{const arr=load();const p=arr[+b.dataset.i];sel=[...p.sel];const pl=p.L||{};L.mirada=pl.mirada||'';L.campos=pl.campos||'';L.facial=pl.facial||'';L.sensib=pl.sensib||'';render();closeSheet();toast('Cargado')});
   host.querySelectorAll('.del').forEach(b=>b.onclick=()=>{let arr=load();arr.splice(+b.dataset.d,1);store(arr);renderSlots()});
 }
 function clearAll(){if(confirm('¿Borrar todos los pacientes guardados?')){localStorage.removeItem(KEY);renderSlots();toast('Todo borrado')}}
