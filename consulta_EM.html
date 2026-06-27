@@ -268,6 +268,7 @@ function renderCampos(){
     let extraBtns='';
     if(c[0]==='ttohab'){extraBtns=`<button class="copybtn" onclick="formatTto()">formatear</button>`}
     if(c[0]==='resumen'){extraBtns=`<span id="resumenBtns"></span>`}
+    if(c[0]==='expl'&&tipoActual==='inicial'){extraBtns=`<button class="copybtn" onclick="insertExpl(EXPL.cribado)">cribado</button><button class="copybtn" onclick="insertExpl(EXPL.enrl)">ENRL det.</button>`}
     if(c[0]==='pc'){extraBtns=`<span id="pcBtns"></span>`}
     if(c[0]==='plan'){extraBtns=`<span id="planBtns"></span>`}
     d.innerHTML=`<div class="secthead"><label style="margin:0">${c[1]}</label><span class="btns">${extraBtns}<button class="copybtn" onclick="copyText(($('i_${c[0]}').value||'').trim(),this)">copiar</button></span></div><textarea id="i_${c[0]}" class="${small}"></textarea>`;
@@ -340,7 +341,7 @@ function buildPlanBtns(){
   const host=$('planBtns');if(!host)return;
   _petSel=[];
   let html=PETICIONES.map(p=>`<button class="copybtn petbtn" data-p="${p}" onclick="togglePeticion(this)">${p}</button>`).join('');
-  html+=` <span style="display:inline-flex;align-items:center;gap:4px"><button class="copybtn" onclick="addRevision()">Revisión</button><input id="revMeses" type="number" min="1" style="width:48px;padding:3px 6px" placeholder="m"></span>`;
+  html+=` <span style="display:inline-flex;align-items:center;gap:4px"><button class="copybtn" onclick="addRevision('6m')">Rev. 6m</button><button class="copybtn" onclick="addRevision('anual')">Rev. anual</button><button class="copybtn" onclick="addRevision('pruebas')">Rev. con pruebas</button></span>`;
   host.innerHTML=html;
 }
 function togglePeticion(btn){
@@ -357,9 +358,9 @@ function syncPeticiones(){
   el.value=lines.filter(l=>l.trim()).join('\n');
   genInforme();
 }
-function addRevision(){
-  const m=$('revMeses')?$('revMeses').value:'';
-  const txt=m?`Revisión en ${m} meses`:'Revisión';
+function addRevision(tipo){
+  const map={'6m':'Revisión en 6 meses','anual':'Revisión anual','pruebas':'Revisión con las pruebas solicitadas'};
+  const txt=map[tipo]||'Revisión';
   const el=$('i_plan');if(el){el.value=(el.value?el.value+'\n':'')+dashify(txt);genInforme();toast('Añadido a Plan')}
 }
 function dashify(txt){return (txt||'').split('\n').map(l=>{l=l.trim();if(!l)return '';return l.startsWith('-')?l:'- '+l;}).filter(Boolean).join('\n');}
@@ -584,6 +585,15 @@ function quadScale(host,abbr,title,lab,fmt,note){
   upd();
 }
 function insertScale(txt,btn){const el=$('i_expl');if(el){el.value=(el.value?el.value+'\n':'')+sanitizeDiraya(txt);genInforme();toast('Volcado a Exploración')}else toast('Abre la pestaña Informe primero')}
+const EXPL={
+  cribado:`FFSS globalmente conservadas. No anopsias por confrontación, MOEs sin restricciones, no diplopia ni nistagmo, V sensitivomotor normal, no asimetría facial, pares bajos no alterados. Balance muscular conservado globalmente, REM simétricos. No hipoestesia apendicular distal. Marcha y equilibrios fisiológicos para la edad. No dismetría apendicular.`,
+  enrl:`- FFSS: consciente, atento/a, orientado/a, lenguaje normofluente sin elementos disfásicos, no disartria
+- PPCC: no anopsias por confrontación, PICNR, MOEs sin restricciones, no diplopia ni nistagmo, V sensitivomotor normal, no asimetría facial, pares bajos no alterados
+- MOTOR: BM 5/5 globalmente, REM ++/++++ simétricos, RCPFB
+- SENSITIVO: no hipoestesia ni hipopalestesia apendicular
+- MARCHA Y COORDINACIÓN: marcha fisiológica, tándem posible, Romberg negativo. No dismetría apendicular`,
+};
+function insertExpl(txt){const el=$('i_expl');if(el){el.value=(el.value?el.value+'\n':'')+sanitizeDiraya(txt);genInforme();toast('Volcado a Exploración')}else toast('Abre la pestaña Informe primero')}
 const EMORDER=['SDMT','T25FW','NHPT'];
 const est=$('scaleTabs'),esh=$('scaleHost');
 EMORDER.forEach((key,i)=>{

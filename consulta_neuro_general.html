@@ -292,7 +292,7 @@ function buildPlanBtns(){
   const host=$('planBtns');if(!host)return;
   _petSel=[];
   let html=PETICIONES.map(p=>`<button class="copybtn petbtn" data-p="${p}" onclick="togglePeticion(this)">${p}</button>`).join('');
-  html+=` <span style="display:inline-flex;align-items:center;gap:4px"><button class="copybtn" onclick="addRevision()">Revisión</button><input id="revMeses" type="number" min="1" style="width:48px;padding:3px 6px" placeholder="m"></span>`;
+  html+=` <span style="display:inline-flex;align-items:center;gap:4px"><button class="copybtn" onclick="addRevision('6m')">Rev. 6m</button><button class="copybtn" onclick="addRevision('anual')">Rev. anual</button><button class="copybtn" onclick="addRevision('pruebas')">Rev. con pruebas</button></span>`;
   host.innerHTML=html;
 }
 function togglePeticion(btn){
@@ -310,10 +310,9 @@ function syncPeticiones(){
   el.value=lines.filter(l=>l.trim()).join('\n');
   genInforme();
 }
-function addRevision(){
-  const m=$('revMeses')?$('revMeses').value:'';
-  const txt=m?`Revisión en ${m} meses`:'Revisión';
-  insertTo('plan',txt);
+function addRevision(tipo){
+  const map={'6m':'Revisión en 6 meses','anual':'Revisión anual','pruebas':'Revisión con las pruebas solicitadas'};
+  insertTo('plan',map[tipo]||'Revisión');
 }
 function mkField(c,small,extraBtns){
   const d=document.createElement('div');d.className='row';
