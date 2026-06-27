@@ -260,8 +260,16 @@ function renderCampos(){
   });
   buildPcBtns();
   buildPlanBtns();
+  // precargar antecedentes por defecto en primera visita si está vacío
+  if(tipoActual==='primera' && $('i_ant') && !$('i_ant').value){
+    $('i_ant').value=ANT_TXT;
+  }
   genInforme();
 }
+const ANT_TXT=`- NAMC
+- FRV y tóxicos: no HTA, DM ni DL conocidas. Niega consumo de tóxicos.
+- IQ: no refiere
+SB: mRS 0`;
 /* --- Pruebas complementarias con fecha (botón junto a PC) --- */
 const PRUEBAS_PC=['RM','TC','Analítica','LCR','EMG/ENG','EEG','Doppler TSA','PEV'];
 const MESES=['Ene','Feb','Mar','Abr','May','Jun','Jul','Ago','Sep','Oct','Nov','Dic'];

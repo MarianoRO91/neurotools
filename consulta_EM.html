@@ -282,8 +282,16 @@ function renderCampos(){
     if($('i_dmt')&&!$('i_dmt').value)$('i_dmt').value=DMT_TXT;
     if($('i_evolucion')&&!$('i_evolucion').value)$('i_evolucion').value=EVOL_TXT;
   }
+  // precargar antecedentes por defecto en informe inicial si está vacío
+  if(tipoActual==='inicial' && $('i_ant') && !$('i_ant').value){
+    $('i_ant').value=ANT_TXT;
+  }
   genInforme();
 }
+const ANT_TXT=`- NAMC
+- FRV y tóxicos: no HTA, DM ni DL conocidas. Niega consumo de tóxicos.
+- IQ: no refiere
+SB: mRS 0`;
 /* Resumen: subtipo de EM + año de inicio */
 const SUBTIPOS=['EMRR','EMSP activa','EMSP no activa','EMPP','CIS','RIS'];
 function buildResumenBtns(){
@@ -335,7 +343,7 @@ function addPrueba(p){
   genInforme();el.focus();el.selectionStart=el.selectionEnd=el.value.length;
 }
 /* Peticiones frecuentes en EM + revisión */
-const PETICIONES=['RM craneal','RM medular','Analítica','Neurofilamentos (sNfL)','Punción lumbar','Potenciales evocados','OCT'];
+const PETICIONES=['RM craneal','RM medular','Analítica','Neurofilamentos (sNfL)','Punción lumbar','Potenciales evocados','OCT','Interconsulta'];
 let _petSel=[];
 function buildPlanBtns(){
   const host=$('planBtns');if(!host)return;
