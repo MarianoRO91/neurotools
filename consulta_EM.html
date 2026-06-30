@@ -260,8 +260,12 @@ $('tipoInforme').querySelectorAll('button').forEach(b=>{
     renderCampos();}
 });
 function curCampos(){return tipoActual==='inicial'?CAMPOS_INI:CAMPOS_EVO}
+const _campoStore={};
 function renderCampos(){
-  const cc=$('campos');cc.innerHTML='';
+  const cc=$('campos');
+  // guardar valores actuales antes de reconstruir, para no perder lo escrito al cambiar de tipo
+  cc.querySelectorAll('textarea[id^="i_"]').forEach(t=>{_campoStore[t.id]=t.value});
+  cc.innerHTML='';
   curCampos().forEach(c=>{
     const d=document.createElement('div');d.className='row';
     const small=c[3]?' campo-sm':'';
@@ -271,8 +275,10 @@ function renderCampos(){
     if(c[0]==='expl'&&tipoActual==='inicial'){extraBtns=`<button class="copybtn" onclick="insertExpl(EXPL.cribado)">cribado</button><button class="copybtn" onclick="insertExpl(EXPL.enrl)">ENRL det.</button>`}
     if(c[0]==='pc'){extraBtns=`<span id="pcBtns"></span>`}
     if(c[0]==='plan'){extraBtns=`<span id="planBtns"></span>`}
-    d.innerHTML=`<div class="secthead"><label style="margin:0">${c[1]}</label><span class="btns">${extraBtns}<button class="copybtn" onclick="copyText(($('i_${c[0]}').value||'').trim(),this)">copiar</button></span></div><textarea id="i_${c[0]}" class="${small}"></textarea>`;
+    d.innerHTML=`<div class="secthead"><label style="margin:0">${c[1]}</label><span class="btns" style="${c[0]==='plan'?'flex-wrap:wrap':''}">${extraBtns}<button class="copybtn" style="${c[0]==='plan'?'margin-left:auto':''}" onclick="copyText(($('i_${c[0]}').value||'').trim(),this)">copiar</button></span></div><textarea id="i_${c[0]}" class="${small}"></textarea>`;
     cc.appendChild(d);
+    // restaurar valor previo si existía
+    if(_campoStore['i_'+c[0]]!==undefined)$('i_'+c[0]).value=_campoStore['i_'+c[0]];
   });
   buildResumenBtns();
   buildPcBtns();
@@ -344,15 +350,25 @@ function addPrueba(p){
   genInforme();el.focus();el.selectionStart=el.selectionEnd=el.value.length;
 }
 /* Peticiones frecuentes en EM + revisión */
-const PETICIONES=['RM craneal','RM medular','Analítica','Neurofilamentos (sNfL)','Punción lumbar','Potenciales evocados','OCT','Interconsulta'];
+const PETICIONES=['RM craneal','RM medular','Analítica','Neurofilamentos (sNfL)','Potenciales evocados','Interconsulta'];
 let _petSel=[];
 function buildPlanBtns(){
   const host=$('planBtns');if(!host)return;
   _petSel=[];
   let html=PETICIONES.map(p=>`<button class="copybtn petbtn" data-p="${p}" onclick="togglePeticion(this)">${p}</button>`).join('');
+  // frases rápidas según tipo de informe
+  if(tipoActual==='inicial'){
+    html+=` <button class="copybtn" onclick="addPlan('Se explica diagnóstico y se resuelven dudas')">explica dx</button>`;
+    html+=` <button class="copybtn" onclick="addPlan('Se propondrá para tratamiento con: ')">propone tto</button>`;
+    html+=` <button class="copybtn" onclick="addPlan('Se remite a M. Preventiva para vacunación')">M. Preventiva</button>`;
+    html+=` <button class="copybtn" onclick="addPlan('Se le citará para realización de punción lumbar')">PL</button>`;
+  } else {
+    html+=` <button class="copybtn" onclick="addPlan('Tratamiento sin cambios')">tto sin cambios</button>`;
+  }
   html+=` <span style="display:inline-flex;align-items:center;gap:4px"><button class="copybtn" onclick="addRevision('6m')">Rev. 6m</button><button class="copybtn" onclick="addRevision('anual')">Rev. anual</button><button class="copybtn" onclick="addRevision('pruebas')">Rev. con pruebas</button></span>`;
   host.innerHTML=html;
 }
+function addPlan(txt){const el=$('i_plan');if(el){el.value=(el.value?el.value+'\n':'')+dashify(txt);genInforme();toast('Añadido a Plan')}}
 function togglePeticion(btn){
   const p=btn.dataset.p;
   const i=_petSel.indexOf(p);
@@ -492,14 +508,15 @@ renderCampos();
 
 /* ===== EDSS con notas cualitativas ===== */
 const SF=[
-  {k:'V',name:'Visual (óptico)',g:['normal','escotoma o AV >20/30','peor ojo 20/30-20/59','peor ojo escotoma grande o 20/60-20/99','peor ojo 20/100-20/200 o hemianopsia','peor ojo <20/200','grado 5 + mejor ojo ≤20/60']},
+  {k:'V',name:'Visual (óptico)',g:['normal','escotoma; AV (corr.) mejor de 0,7 (20/30)','peor ojo: escotoma, AV 0,7-0,3 (20/30-20/59)','peor ojo: escotoma grande o ↓ campos moderada, AV 0,3-0,2 (20/60-20/99)','peor ojo: ↓ campos marcada, AV 0,2-0,1 (20/100-20/200); o gr.3 + mejor ojo ≤0,3 (20/60)','peor ojo AV <0,1 (20/200); o gr.4 + mejor ojo ≤0,3 (20/60)','grado 5 + mejor ojo AV ≤0,3 (20/60)']},
   {k:'TE',name:'Tronco del encéfalo',g:['normal','solo signos','nistagmo moderado u otra discapacidad leve','nistagmo grave, paresia EO marcada o discapacidad moderada de otros pares','disartria marcada u otra discapacidad marcada','incapacidad para tragar o hablar']},
-  {k:'P',name:'Piramidal',g:['normal','signos sin discapacidad','discapacidad mínima','para/monoparesia leve-moderada','paraparesia/hemiparesia marcada o monoplejia','paraplejia/hemiplejia/tetraparesia marcada','tetraplejia']},
-  {k:'C',name:'Cerebeloso',g:['normal','signos sin discapacidad','ataxia leve','ataxia troncal/de miembros moderada','ataxia grave (todos los miembros)','no ejecuta movimientos coordinados']},
-  {k:'S',name:'Sensitivo',g:['normal','solo signos en 1-2 miembros','disminución leve táctil/dolor/posición o vibratoria moderada en 1-2 miembros','disminución moderada o leve en 3-4 miembros','disminución marcada o moderada en >2 miembros','pérdida sensitiva esencial 1-2 miembros','pérdida esencial por debajo de la cabeza']},
-  {k:'Esf',name:'Esfínteres (vejiga/intestino)',g:['normal','urgencia/retención leve sin incontinencia','urgencia/retención moderada o incontinencia rara','incontinencia frecuente','sondaje casi constante','pérdida de función vesical','pérdida vesical e intestinal']},
-  {k:'Cog',name:'Cognición (mental)',g:['normal','alteración del ánimo aislada','disminución cognitiva leve','disminución moderada','disminución marcada','demencia/síndrome cerebral crónico grave']},
+  {k:'P',name:'Piramidal',g:['normal','signos sin discapacidad','discapacidad mínima','para/hemiparesia leve-moderada','paraparesia/hemiparesia marcada, cuadriparesia moderada o monoplejia','paraplejia/hemiplejia/tetraparesia marcada','tetraplejia']},
+  {k:'C',name:'Cerebeloso',g:['normal','signos sin discapacidad','ataxia leve','ataxia troncal/de miembros moderada','ataxia grave (todos los miembros)','no ejecuta movimientos coordinados por ataxia']},
+  {k:'S',name:'Sensitivo',g:['normal','↓ vibratoria/grafestesia solo, en 1-2 miembros','↓ leve tacto/dolor/posición y/o vibratoria moderada en 1-2 miembros; o vibratoria sola en 3-4','↓ moderada tacto/dolor/posición y/o vibratoria casi abolida en 1-2 miembros; o ↓ leve tacto/dolor y/o propiocepción moderada en 3-4','↓ marcada tacto/dolor o pérdida propiocepción en 1-2 miembros; o ↓ moderada tacto/dolor y/o propioceptiva grave en >2 miembros','pérdida sensitiva (esencial) en 1-2 miembros; o ↓ moderada tacto/dolor y/o propiocepción abolida en casi todo el cuerpo bajo la cabeza','sensibilidad esencialmente abolida bajo la cabeza']},
+  {k:'Esf',name:'Esfínteres (vejiga/intestino)',g:['normal','urgencia/retención leve','urgencia/retención moderada o incontinencia urinaria rara','incontinencia urinaria frecuente','sondaje casi constante','pérdida de función vesical','pérdida vesical e intestinal']},
+  {k:'Men',name:'Mental (cognición)',g:['normal','alteración del ánimo aislada (no puntúa EDSS)','disminución cognitiva leve','disminución cognitiva moderada','disminución cognitiva marcada (sd. cerebral crónico moderado)','demencia/síndrome cerebral crónico grave']},
 ];
+const FATIGA=['sin fatiga','leve: no interfiere con la actividad habitual','moderada: limita ≤50% de la actividad habitual','grave: limita >50% de la actividad habitual'];
 const st={};SF.forEach(s=>st[s.k]=0);
 const notes={};SF.forEach(s=>notes[s.k]='');
 const cont=$('edss_fs');
@@ -512,6 +529,13 @@ SF.forEach(s=>{
   cont.appendChild(b);
   b.querySelector('#note_'+s.k).oninput=e=>{notes[s.k]=e.target.value.trim();calcEDSS()};
 });
+// selector de fatiga (parte del FS Mental, escala 0-3, no modifica el EDSS)
+let fatigaVal=0;
+const fb=document.createElement('div');fb.className='fs-block';
+fb.innerHTML=`<div class="fs-head"><b>Fatiga</b> <span style="font-weight:400;color:var(--muted);font-size:11px">(no modifica el paso EDSS)</span><span class="fs-grade" id="grade_Fat">Fat 0</span></div>`+
+  FATIGA.map((lab,grade)=>`<label class="opt"><input type="radio" name="sf_Fat" value="${grade}" ${grade===0?'checked':''}><span class="lab"><b>${grade}</b> — ${lab}</span></label>`).join('');
+cont.appendChild(fb);
+fb.querySelectorAll('input[type=radio]').forEach(inp=>inp.onchange=()=>{fatigaVal=+inp.value;$('grade_Fat').textContent='Fat '+inp.value;calcEDSS()});
 function lowEDSS(grades){
   const max=Math.max(...grades),c=g=>grades.filter(x=>x===g).length;
   const n1=c(1),n2=c(2),n3=c(3),n4=c(4);let e=0,r='';
@@ -531,6 +555,7 @@ function calcEDSS(){
   const fsShort=SF.map(s=>s.k+st[s.k]).join(' ');
   $('EDSS_fs').textContent=fsShort;$('EDSS_rule').textContent=r;
   const noteList=SF.filter(s=>notes[s.k]).map(s=>`${s.k}${st[s.k]}: ${notes[s.k]}`);
+  if(fatigaVal>0)noteList.push(`Fatiga ${fatigaVal}: ${FATIGA[fatigaVal]}`);
   window._EDSS_short=`EDSS ${e.toFixed(1)} (${fsShort})`;
   window._EDSS_full=`EDSS ${e.toFixed(1)} (${fsShort})`+(noteList.length?'\n  '+noteList.join('\n  '):'');
 }
@@ -541,7 +566,27 @@ function insertEDSS(){const el=$('i_expl');if(el){el.value=(el.value?el.value+'\
 /* ===== ESCALAS EM (SDMT, T25FW, 9HPT) ===== */
 const EMSCALES={};
 EMSCALES.SDMT={name:'SDMT',build:host=>{
-  numScale(host,'SDMT','Symbol Digit Modalities Test','Aciertos en 90 s',n=>`SDMT: ${n} aciertos/90 s`,'Comparar con basal y normativa por edad/escolaridad. ↓≥4 puntos sugiere deterioro relevante (orientativo).');
+  const wrap=document.createElement('div');wrap.className='card';
+  wrap.innerHTML=`<h2>Symbol Digit Modalities Test (SDMT) <span style="margin-left:auto;display:flex;gap:6px"><button class="copybtn bcopy">copiar</button><button class="copybtn bvolcar">↑ informe</button></span></h2>
+   <div class="scorebar"><div class="fsstring" id="SDMT_r" style="font-size:15px;color:var(--accent)">—</div></div>
+   <div class="row"><label>Aciertos en 90 s</label><input type="number" min="0" max="110" id="SDMT_n" style="max-width:160px"></div>
+   <div class="row"><label>Nivel de estudios (influye en la normativa)</label>
+     <select id="SDMT_esc">
+       <option value="">— sin especificar —</option>
+       <option value="primaria incompleta">Primaria incompleta</option>
+       <option value="primaria (EGB/ESO)">Primaria completa (EGB/ESO)</option>
+       <option value="secundaria (Bachillerato/FP)">Secundaria (Bachillerato/FP)</option>
+       <option value="universitarios">Estudios universitarios</option>
+     </select></div>
+   <p class="mini">Comparar con basal y normativa por edad y escolaridad. ↓≥4 puntos sugiere deterioro relevante (orientativo).</p>`;
+  host.appendChild(wrap);
+  function upd(){const n=+$('SDMT_n').value||0;const esc=$('SDMT_esc').value;
+    let r=n?`SDMT: ${n} aciertos/90 s`:'SDMT: —';if(esc&&n)r+=` (estudios: ${esc})`;
+    $('SDMT_r').textContent=r;window._SDMT=r;}
+  $('SDMT_n').oninput=upd;$('SDMT_esc').onchange=upd;
+  wrap.querySelector('.bcopy').onclick=e=>copyText(window._SDMT||'SDMT',e.target);
+  wrap.querySelector('.bvolcar').onclick=e=>insertScale(window._SDMT||'SDMT',e.target);
+  upd();
 }};
 EMSCALES.T25FW={name:'T25 pies',build:host=>{
   pairScale(host,'T25FW','Timed 25-Foot Walk','Dos ensayos cronometrados de 7,62 m (s)','s',(a,b)=>{const m=(a&&b)?((a+b)/2).toFixed(1):(a||b||'—');return `T25FW: ${a||'—'} s / ${b||'—'} s (media ${m} s)`},'Promediar 2 ensayos. ↑≥20% respecto a basal = empeoramiento.');
@@ -648,7 +693,8 @@ const TME=[
    {n:'Siponimod (Mayzent)',plan:`SIPONIMOD: titulación 0,25 mg días 1-2 → 0,5 mg día 3 → 0,75 mg día 4 → 1,25 mg día 5 → mantenimiento 2 mg al día.`,reco:['Dosis de mantenimiento 1 mg/día si genotipo CYP2C9*2*3. GENOTIPADO CYP2C9 OBLIGATORIO; contraindicado en *3*3.','1ª dosis monitorizada si cardiopatía. OCT, hemograma, transaminasas, VVZ. Indicación: EMSP activa.']},
    {n:'Ozanimod (Zeposia)',plan:`OZANIMOD: 0,23 mg días 1-4 → 0,46 mg días 5-7 → 0,92 mg al día de mantenimiento.`,reco:['Función hepática y ECG basal; OCT; serología VVZ. Precaución con IMAO/tiramina.']},
    {n:'Ponesimod (Ponvory)',plan:`PONESIMOD: envase de inicio con titulación de 2 a 10 mg en 14 días; mantenimiento 20 mg al día.`,reco:['1ª dosis monitorizada si cardiopatía. Función hepática, OCT, VVZ. Reiniciar titulación si se omiten ≥4 dosis.']},
-   {n:'Cladribina oral (Mavenclad)',plan:`CLADRIBINA: dosis acumulada 3,5 mg/kg en 2 años (1,75 mg/kg al año). Cada año, 2 semanas de tratamiento (en el mes 1 y el mes 2), número de comprimidos según peso. Sin tratamiento en los años 3 y 4.`,reco:['Cribado VIH/VHB/VHC y TBC; RM basal (<3 meses).','Linfocitos antes de cada ciclo (≥1000 año 1; ≥800 año 2).','Anticoncepción ambos sexos durante y 6 meses tras la dosis. Vacunación previa (incl. VVZ); evitar vivas. Profilaxis herpética si linfopenia grado ≥3.']},
+   {n:'Cladribina oral (Mavenclad)',calc:'cladribina',plan:`CLADRIBINA (Mavenclad®): dosis acumulada 3,5 mg/kg en 2 años (1,75 mg/kg al año). Cada año, 2 semanas de tratamiento (al inicio del mes 1 y del mes 2); número de comprimidos de 10 mg según peso. Sin tratamiento en los años 3 y 4.`,reco:['Cribado VIH/VHB/VHC y TBC; RM basal (<3 meses).','Linfocitos normales antes del año 1 y ≥800/mm³ antes del año 2 (puede retrasarse hasta 6 meses).','Anticoncepción ambos sexos durante y 6 meses tras la dosis. Vacunación previa (incl. VVZ); evitar vivas. Profilaxis herpética si linfopenia grado ≥3.','Contraindicada si aclaramiento de creatinina <60 ml/min, neoplasia activa, infección crónica activa, embarazo/lactancia.']},
+   {n:'Tolebrutinib (Cenrifki)',plan:`TOLEBRUTINIB (Cenrifki®): vía oral, una vez al día con alimentos. Indicación aprobada (EMA/CE): EM secundaria progresiva NO activa (sin brotes en los 2 últimos años).`,reco:['Inhibidor de BTK con penetración en SNC. Aprobado por la Comisión Europea (2026); aún PENDIENTE de financiación/comercialización en España, verificar disponibilidad antes de prescribir.','Vigilar función hepática (transaminasas) por riesgo de hepatotoxicidad; cribado/monitorización según ficha técnica cuando esté disponible.']},
  ]},
  {fam:'Anti-CD20',items:[
    {n:'Ocrelizumab (Ocrevus)',plan:`OCRELIZUMAB: dosis inicial 300 mg intravenoso y 300 mg intravenoso separados 2 semanas; después 600 mg intravenoso cada 6 meses.`,reco:['Cribado VHB (AgHBs y anti-HBc) obligatorio; VHC/VIH; TBC. Vacunación al día antes de iniciar.','Inmunoglobulinas basales y en seguimiento (hipogammaglobulinemia). EMR y EMPP temprana.']},
@@ -656,7 +702,9 @@ const TME=[
    {n:'Ofatumumab (Kesimpta)',plan:`OFATUMUMAB: 20 mg subcutáneo en las semanas 0, 1 y 2; después 20 mg subcutáneo mensual desde la semana 4.`,reco:['Mismo cribado anti-CD20: VHB/VHC/VIH, TBC, vacunación previa. Autoadministración SC domiciliaria.']},
  ]},
  {fam:'Otros de alta eficacia',items:[
-   {n:'Natalizumab (Tysabri)',plan:`NATALIZUMAB 300 mg intravenoso cada 4 semanas.`,reco:['Existe formulación SC 300 mg/4 sem; valorar intervalo extendido cada 6 sem en seleccionados.','Serología JCV con índice antes y periódicamente: clave para riesgo de LMP.','Estratificar riesgo LMP (índice JCV, duración, inmunosupresión previa). RM de vigilancia.']},
+   {n:'Natalizumab IV (Tysabri)',plan:`NATALIZUMAB 300 mg intravenoso cada 4 semanas.`,reco:['Valorar intervalo extendido (cada 6 semanas) en pacientes seleccionados para reducir riesgo de LMP.','Serología JCV con índice antes y periódicamente: clave para el riesgo de LMP.','Estratificar riesgo LMP (índice JCV, duración del tratamiento, inmunosupresión previa). RM de vigilancia.']},
+   {n:'Natalizumab SC (Tysabri SC)',plan:`NATALIZUMAB 300 mg subcutáneo (2 inyecciones de 150 mg) cada 4 semanas.`,reco:['Misma dosis e intervalo que la vía IV; equivalente en eficacia. Observación tras las primeras administraciones.','Mismo cribado y vigilancia de LMP (índice JCV, RM) que la formulación intravenosa.']},
+   {n:'Rituximab (off-label)',plan:`RITUXIMAB (uso fuera de indicación en EM): 1000 mg intravenoso los días 1 y 15 como inducción; después 500-1000 mg intravenoso cada 6 meses (esquemas variables según protocolo).`,reco:['Anti-CD20 ampliamente usado off-label. Premedicación (corticoide, antihistamínico, paracetamol) por reacciones infusionales.','Cribado VHB (AgHBs y anti-HBc), VHC, VIH, TBC. Vacunación al día antes de iniciar. Inmunoglobulinas en seguimiento.']},
    {n:'Alemtuzumab (Lemtrada)',plan:`ALEMTUZUMAB: ciclo 1 = 12 mg al día intravenoso durante 5 días; ciclo 2 (a los 12 meses) = 12 mg al día intravenoso durante 3 días.`,reco:['Monitorización mensual 48 meses tras la última dosis: hemograma (PTI), creatinina y orina (anti-MBG), TSH.','Profilaxis antiherpética. Cribado VHB/VHC/VIH/TBC/VPH; vacunación (incl. VVZ) ≥6 semanas antes.']},
  ]},
 ];
@@ -669,14 +717,75 @@ function renderTME(){
       const d=document.createElement('div');d.className='tmpl';
       const id='tme_'+it.n.replace(/[^A-Za-z]/g,'').slice(0,18);
       const reco=(it.reco||[]).map(x=>`<li>${x}</li>`).join('');
+      const calc=it.calc==='cladribina'?cladribinaCalcHTML(id):'';
       d.innerHTML=`<h3>${it.n} <span style="margin-left:auto;display:flex;gap:6px"><button class="copybtn" onclick="copyPlan(this)">copiar plan</button><button class="copybtn" onclick="insertPlan(this)">↑ plan a informe</button></span></h3>
         ${planBox(id,it.plan)}
+        ${calc}
         ${reco?`<div class="reco"><ul>${reco}</ul></div>`:''}`;
       det.appendChild(d);
     });
     host.appendChild(det);
   });
   bindPlans(host);
+  bindCladribina();
+}
+/* Calculadora de cladribina por peso (tabla AEMPS/EMA, comprimidos de 10 mg) */
+function cladribinaCalcHTML(id){
+  return `<div class="clad-calc" style="border:1px solid var(--line);border-radius:9px;padding:10px;margin-top:8px;background:var(--panel2)">
+    <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap">
+      <label style="margin:0">Peso del paciente (kg):</label>
+      <input type="number" id="clad_peso" min="40" max="200" step="0.5" style="max-width:110px" placeholder="kg">
+      <button class="copybtn" onclick="cladribinaInsert()">↑ esquema a informe</button>
+    </div>
+    <div class="clad-out" id="clad_out" style="margin-top:8px;font-size:13px;color:var(--muted)">Introduce el peso (≥40 kg) para ver el esquema de comprimidos.</div>
+  </div>`;
+}
+// Tabla 1 AEMPS: comprimidos por semana de tratamiento según peso (igual en año 1 y año 2)
+function cladribinaTabla(peso){
+  if(peso<40)return null;
+  let s1,s2;
+  if(peso<50){s1=4;s2=4}
+  else if(peso<60){s1=5;s2=5}
+  else if(peso<70){s1=6;s2=6}
+  else if(peso<80){s1=7;s2=7}
+  else if(peso<90){s1=8;s2=7}
+  else if(peso<100){s1=9;s2=8}
+  else if(peso<110){s1=10;s2=9}
+  else {s1=10;s2=10}
+  return {s1,s2};
+}
+// Tabla 2 AEMPS: distribución de comprimidos por día (días 1-5)
+function cladribinaDias(totalSemana){
+  const map={4:[1,1,1,1,0],5:[1,1,1,1,1],6:[2,1,1,1,1],7:[2,2,1,1,1],8:[2,2,2,1,1],9:[2,2,2,2,1],10:[2,2,2,2,2]};
+  return map[totalSemana]||[];
+}
+function cladribinaTexto(peso){
+  const t=cladribinaTabla(peso);if(!t)return null;
+  const d1=cladribinaDias(t.s1),d2=cladribinaDias(t.s2);
+  const fmtDias=arr=>arr.map((n,i)=>`día ${i+1}: ${n}`).filter((x,i)=>arr[i]>0||i<4).join(', ');
+  const total1=t.s1, total2=t.s2;
+  const totalAnual=total1+total2, totalGlobal=totalAnual*2;
+  return `CLADRIBINA (Mavenclad®) — esquema para ${peso} kg (comprimidos de 10 mg):\n`+
+    `Cada AÑO de tratamiento (años 1 y 2):\n`+
+    `- Semana 1 (inicio del mes 1): ${total1} comprimidos en total → ${fmtDias(d1)}.\n`+
+    `- Semana 2 (inicio del mes 2): ${total2} comprimidos en total → ${fmtDias(d2)}.\n`+
+    `Total por año: ${totalAnual} comprimidos. Total de los 2 años: ${totalGlobal} comprimidos.\n`+
+    `Si la dosis diaria es de 2 comprimidos, se toman juntos. Sin tratamiento en los años 3 y 4.`;
+}
+let _cladText='';
+function bindCladribina(){
+  const inp=$('clad_peso');if(!inp)return;
+  inp.oninput=()=>{
+    const peso=parseFloat(inp.value);
+    const out=$('clad_out');
+    if(!peso||peso<40){_cladText='';out.textContent=peso&&peso<40?'Peso <40 kg: no se ha estudiado el uso de cladribina; no procede.':'Introduce el peso (≥40 kg) para ver el esquema de comprimidos.';out.style.color='var(--muted)';return}
+    _cladText=cladribinaTexto(peso);
+    out.textContent=_cladText;out.style.color='var(--ink)';out.style.whiteSpace='pre-wrap';
+  };
+}
+function cladribinaInsert(){
+  if(!_cladText){toast('Introduce primero el peso');return}
+  const el=$('i_plan');if(el){el.value=(el.value?el.value+'\n':'')+sanitizeDiraya(_cladText);genInforme();toast('Esquema de cladribina volcado al Plan')}else toast('Abre la pestaña Informe primero')
 }
 function copyPlan(btn){
   const t=btn.closest('.tmpl');
@@ -694,9 +803,9 @@ renderTME();
 /* ===== SINTOMÁTICO: planes editables prerellenados ===== */
 const SINT=[
  {fam:'Espasticidad',items:[
-   {n:'Baclofeno',plan:`BACLOFENO: iniciar 5 mg cada 8 horas. Subir 5 mg por toma cada 3 días según respuesta y tolerancia. Rango habitual 30-60 mg al día.`,reco:['Máximo 80 mg/día. Retirar de forma gradual, no suspender bruscamente.','Vigilar sedación y debilidad.']},
-   {n:'Tizanidina',plan:`TIZANIDINA: iniciar 2 mg por la noche; subir de 2 en 2 mg cada 3-4 días hasta 6-24 mg al día repartidos.`,reco:['Máximo 36 mg/día. Vigilar hipotensión y transaminasas.','Contraindicada con ciprofloxacino o fluvoxamina.']},
-   {n:'Cannabinoide THC:CBD',plan:`CANNABINOIDE THC:CBD (vía oromucosa): titulación progresiva durante 14 días según tolerancia, hasta un máximo de 12 pulsaciones al día.`,reco:['Indicado en espasticidad moderada-grave refractaria a otros fármacos.','Reevaluar la respuesta a las 4 semanas. Vigilar mareo, somnolencia y efectos psicoactivos.']},
+   {n:'Baclofeno (Lioresal®)',plan:`BACLOFENO (Lioresal®, comprimidos de 10 mg y 25 mg): iniciar medio comprimido de 10 mg (5 mg) cada 8 horas. Subir 5 mg por toma cada 3 días según respuesta y tolerancia. Rango habitual 30-60 mg al día.`,reco:['Comprimidos de 10 mg (ranurados, permiten medio = 5 mg) y de 25 mg. Máximo 80 mg/día.','Retirar de forma gradual, no suspender bruscamente. Vigilar sedación y debilidad.']},
+   {n:'Tizanidina',plan:`TIZANIDINA: iniciar 2 mg por la noche. Subir 2 mg cada 3-4 días según respuesta, repartido en 3 tomas. Dosis habitual 6-12 mg al día.`,reco:['Dosis máxima: 36 mg/día (no superar). Vigilar hipotensión y transaminasas.','Contraindicada con ciprofloxacino o fluvoxamina (inhibidores potentes de CYP1A2).']},
+   {n:'Cannabinoide THC:CBD (Sativex®)',plan:`SATIVEX® (THC:CBD, pulverización oromucosa): titulación estándar durante 12 días, empezando por 1 pulverización al día y aumentando 1 pulverización cada día:\n- Días 1-2: 1 pulv. (noche)\n- Días 3-4: 2 pulv. (1 mañana + 1 noche)\n- Día 5: 3 pulv. · Día 6: 4 pulv. · Día 7: 5 pulv. · Día 8: 6 pulv. · Día 9: 8 pulv. · Día 10: 10 pulv. · Días 11-12: 12 pulv.\nRepartir mañana y tarde/noche. Máximo 12 pulverizaciones al día.`,reco:['Indicado en espasticidad moderada-grave refractaria a otros fármacos. Reevaluar a las 4 semanas y suspender si no hay respuesta.','Vigilar mareo (sobre todo en la titulación), somnolencia y efectos psicoactivos.']},
  ]},
  {fam:'Fatiga',items:[
    {n:'Amantadina',plan:`AMANTADINA 100 mg por la mañana. Puede añadirse una toma adicional a mediodía. Evitar la toma nocturna porque puede causar insomnio.`,reco:['Vigilar livedo reticularis y edemas.']},
@@ -713,16 +822,22 @@ const SINT=[
    {n:'Lacosamida',plan:`LACOSAMIDA: iniciar 50 mg cada 12 horas; subir según respuesta hasta 100-200 mg cada 12 horas.`,reco:['Vigilar mareo y prolongación del PR (ECG basal si cardiopatía).']},
  ]},
  {fam:'Disfunción vesical',items:[
-   {n:'Anticolinérgicos (vejiga hiperactiva)',plan:`SOLIFENACINA 5 mg al día, u OXIBUTININA 5 mg cada 8-12 horas.`,reco:['Puede subirse solifenacina a 10 mg/día si precisa.','Descartar residuo posmiccional elevado antes; vigilar retención. Efectos anticolinérgicos, precaución cognitiva en mayores.']},
-   {n:'Mirabegrón',plan:`MIRABEGRÓN 50 mg al día.`,reco:['Reducir a 25 mg/día en insuficiencia renal o hepática. Vigilar TA. Menos efectos anticolinérgicos.']},
+   {n:'Mirabegrón (Betmiga®)',plan:`MIRABEGRÓN (Betmiga®) 50 mg al día.`,reco:['Primera opción habitual: menos efectos anticolinérgicos. Reducir a 25 mg/día en insuficiencia renal o hepática. Vigilar TA.','Descartar residuo posmiccional elevado antes; vigilar retención.']},
+   {n:'Solifenacina (Vesicare®)',plan:`SOLIFENACINA (Vesicare®) 5 mg al día. Puede subirse a 10 mg/día si precisa.`,reco:['Anticolinérgico: precaución cognitiva en mayores, vigilar retención y estreñimiento.','Descartar residuo posmiccional elevado antes de iniciar.']},
    {n:'Cateterismo intermitente',plan:`Cateterismo vesical intermitente limpio, con frecuencia según el residuo posmiccional.`,reco:['Valorar con urología/rehabilitación. Educación al paciente o cuidador.']},
  ]},
- {fam:'Marcha / temblor',items:[
+ {fam:'Marcha',items:[
    {n:'Fampridina (mejora de la marcha)',plan:`FAMPRIDINA 10 mg cada 12 horas vía oral.`,reco:['Comprimidos de liberación prolongada. Contraindicada con antecedente de convulsiones o ERC significativa.','Test de marcha basal; suspender si no hay respuesta a las 2-4 semanas.']},
-   {n:'Temblor',plan:`Ensayo terapéutico según el tipo: PROPRANOLOL 10-40 mg cada 8 horas, o CLONAZEPAM 0,5 mg por la noche, o PRIMIDONA a dosis bajas con titulación lenta.`,reco:['Eficacia farmacológica limitada. Valorar rehabilitación; casos seleccionados a cirugía funcional.']},
+ ]},
+ {fam:'Temblor',items:[
+   {n:'Propranolol',plan:`PROPRANOLOL: iniciar 10 mg cada 8 horas; subir según respuesta y tolerancia hasta 40 mg cada 8 horas.`,reco:['Vigilar TA y frecuencia cardiaca. Precaución en asma/EPOC y bloqueo AV.']},
+   {n:'Clonazepam',plan:`CLONAZEPAM: iniciar 0,5 mg por la noche; ajustar lentamente según respuesta y tolerancia.`,reco:['Vigilar sedación y riesgo de dependencia. Retirar de forma gradual.']},
+   {n:'Primidona',plan:`PRIMIDONA: iniciar 25-50 mg por la noche con titulación lenta según respuesta y tolerancia.`,reco:['Empezar a dosis bajas por somnolencia inicial. Eficacia farmacológica del temblor en EM limitada.']},
+   {n:'Otras medidas (temblor)',plan:`Valorar rehabilitación y terapia ocupacional. Casos seleccionados, derivar para valoración de cirugía funcional (estimulación cerebral profunda / talamotomía).`,reco:['La respuesta farmacológica del temblor cerebeloso en EM suele ser pobre.']},
  ]},
  {fam:'Brote agudo',items:[
-   {n:'Corticoide oral en brote (Solu-Moderin)',plan:`Se le entregarán viales de METILPREDNISOLONA 500 mg (Solu-Moderin). Disolver 1000 mg (2 viales) en 1 litro de leche, agua o zumo bajo en azúcar y tomar a sorbos lentos durante 45 minutos por la mañana, durante 3 días.\nTomar OMEPRAZOL 20 mg, 1 comprimido por la mañana mientras tome los corticoides.`,reco:['Vigilar glucemia, TA e insomnio. Descartar infección activa antes de iniciar.']},
+   {n:'Corticoide oral en brote (Solu-Moderin®)',plan:`Se le entregarán viales de METILPREDNISOLONA 500 mg (Solu-Moderin®). Disolver 1000 mg (2 viales) en 1 litro de leche, agua o zumo bajo en azúcar y tomar a sorbos lentos durante 45 minutos por la mañana, durante 3 días.\nTomar OMEPRAZOL 20 mg, 1 comprimido por la mañana mientras tome los corticoides.`,reco:['Vigilar glucemia, TA e insomnio. Descartar infección activa antes de iniciar.']},
+   {n:'Corticoide IV en brote (Hospital de Día)',plan:`Se administrará METILPREDNISOLONA 1000 mg intravenosos al día, durante 3 días, en el Hospital de Día.\nProtección gástrica con OMEPRAZOL 20 mg al día mientras dure el tratamiento.`,reco:['Descartar infección activa antes de iniciar. Vigilar glucemia, TA e insomnio.','Valorar pauta IV frente a oral según gravedad del brote, tolerancia y preferencia del paciente.']},
  ]},
 ];
 function renderSint(){
