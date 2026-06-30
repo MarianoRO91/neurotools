@@ -16,6 +16,8 @@
   header h1{font-size:15px;margin:0;font-weight:600}
   header .note{color:var(--muted);font-size:12px}
   nav{display:flex;gap:4px;padding:8px 16px;border-bottom:1px solid var(--line);background:var(--panel);flex-wrap:wrap;position:sticky;top:0;z-index:20}
+  .navneuron{flex:1 1 120px;min-width:120px;display:flex;align-items:center;justify-content:flex-end;opacity:.8;margin-left:6px}
+  @media(max-width:560px){.navneuron{display:none}}
   nav button{background:transparent;border:1px solid transparent;color:var(--muted);padding:7px 13px;border-radius:8px;cursor:pointer;font-size:14px;font-weight:500}
   nav button:hover{color:var(--ink);background:var(--panel2)}
   nav button.active{color:var(--ink);background:var(--panel2);border-color:var(--line)}
@@ -122,6 +124,47 @@
   <button data-tab="escalas">Escalas EM</button>
   <button data-tab="tme">TME</button>
   <button data-tab="sintomatico">Sintomático</button>
+  <div class="navneuron" aria-hidden="true">
+    <svg viewBox="0 0 452 48" preserveAspectRatio="none" width="100%" height="34" style="max-width:580px" shape-rendering="crispEdges">
+      <style>
+        .ns{fill:var(--accent2)} .nsl{fill:var(--accent)} .nnuc{fill:var(--panel)}
+        .nmy{fill:var(--accent)} .nmyl{fill:#bcd4ff} .nax{fill:var(--muted)} .ntm{fill:var(--accent2)} .ndn{fill:var(--accent2)}
+      </style>
+      <!-- DENDRITAS (menos y más espaciadas: 3 ramas) -->
+      <rect class="ndn" x="2"  y="8"  width="6" height="6"/><rect class="ndn" x="9" y="13" width="6" height="6"/>
+      <rect class="ndn" x="2"  y="21" width="6" height="6"/><rect class="ndn" x="9" y="21" width="6" height="6"/>
+      <rect class="ndn" x="2"  y="34" width="6" height="6"/><rect class="ndn" x="9" y="29" width="6" height="6"/>
+      <!-- SOMA (más grande) -->
+      <rect class="ns"  x="18" y="14" width="5" height="20"/>
+      <rect class="ns"  x="23" y="9"  width="5" height="30"/>
+      <rect class="nsl" x="28" y="6"  width="6" height="36"/>
+      <rect class="nsl" x="34" y="6"  width="6" height="36"/>
+      <rect class="ns"  x="40" y="9"  width="5" height="30"/>
+      <rect class="ns"  x="45" y="14" width="5" height="20"/>
+      <rect class="nnuc" x="29" y="15" width="10" height="18"/>
+      <!-- axón inicial -->
+      <rect class="nax" x="50" y="21" width="10" height="6"/>
+      <!-- vainas de mielina con nodos -->
+      <rect class="nmy"  x="60"  y="13" width="44" height="22"/><rect class="nmyl" x="60"  y="13" width="44" height="4"/>
+      <rect class="nax"  x="104" y="21" width="7"  height="6"/>
+      <rect class="nmy"  x="111" y="13" width="44" height="22"/><rect class="nmyl" x="111" y="13" width="44" height="4"/>
+      <rect class="nax"  x="155" y="21" width="7"  height="6"/>
+      <rect class="nmy"  x="162" y="13" width="44" height="22"/><rect class="nmyl" x="162" y="13" width="44" height="4"/>
+      <rect class="nax"  x="206" y="21" width="7"  height="6"/>
+      <rect class="nmy"  x="213" y="13" width="44" height="22"/><rect class="nmyl" x="213" y="13" width="44" height="4"/>
+      <rect class="nax"  x="257" y="21" width="7"  height="6"/>
+      <rect class="nmy"  x="264" y="13" width="44" height="22"/><rect class="nmyl" x="264" y="13" width="44" height="4"/>
+      <rect class="nax"  x="308" y="21" width="7"  height="6"/>
+      <rect class="nmy"  x="315" y="13" width="44" height="22"/><rect class="nmyl" x="315" y="13" width="44" height="4"/>
+      <rect class="nax"  x="359" y="21" width="7"  height="6"/>
+      <rect class="nmy"  x="366" y="13" width="44" height="22"/><rect class="nmyl" x="366" y="13" width="44" height="4"/>
+      <!-- terminal -->
+      <rect class="nax" x="410" y="21" width="14" height="6"/>
+      <rect class="ntm" x="424" y="13" width="6" height="6"/><rect class="ntm" x="424" y="29" width="6" height="6"/>
+      <rect class="ntm" x="430" y="8"  width="6" height="6"/><rect class="ntm" x="430" y="34" width="6" height="6"/>
+      <rect class="ntm" x="430" y="21" width="6" height="6"/>
+    </svg>
+  </div>
 </nav>
 
 <main>
@@ -211,6 +254,7 @@
 
 <div class="disclaimer">
   Herramienta de apoyo a la documentación en consulta de EM. No sustituye el juicio clínico ni la ficha técnica vigente. Esquemas posológicos verificados con EMA/AEMPS (CIMA) en la fecha de elaboración; pueden cambiar — verificar antes de prescribir. EDSS estimado y auditable, no oficial. Procesamiento y almacenamiento 100% local (este navegador); ningún dato se transmite fuera del dispositivo.
+  <div style="margin-top:6px;opacity:.6;font-size:10px">Diseño original por Mariano Ruiz.</div>
 </div>
 <div class="toast" id="toast"></div>
 
