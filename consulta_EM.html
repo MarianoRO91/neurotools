@@ -203,22 +203,27 @@
     <div class="rule" id="EDSS_rule">Selecciona grados.</div>
     <button class="copybtn" onclick="copyEDSS()">copiar línea EDSS</button>
     <button class="copybtn" onclick="insertEDSS()">↑ volcar a informe</button>
+    <button class="copybtn" onclick="toggleKurtzke()" style="border-color:var(--accent)">ⓘ instrucciones EDSS</button>
   </div>
+  <div id="kurtzkeBox" style="display:none"></div>
   <div class="card"><h2>Deambulación / marcha <span class="mini" style="text-transform:none;letter-spacing:0">(domina ≥4.0)</span></h2>
     <select id="EDSS_amb" onchange="calcEDSS()">
-      <option value="full">Sin limitación</option>
-      <option value="500">≈500 m sin ayuda ni descanso</option>
-      <option value="300">≈300 m sin ayuda</option>
-      <option value="200">≈200 m sin ayuda</option>
-      <option value="100">≈100 m sin ayuda</option>
-      <option value="u100">≈100 m con ayuda unilateral</option>
-      <option value="u50">≈50 m con ayuda unilateral</option>
-      <option value="b120">≈120 m con ayuda bilateral</option>
-      <option value="b10">≈10 m con ayuda bilateral</option>
-      <option value="wheel">Silla de ruedas autopropulsada</option>
-      <option value="wheeldep">Silla, dependiente de transferencias</option>
-      <option value="bed">Encamado, conserva funciones de brazos</option>
-      <option value="bedtotal">Encamado, dependiente total</option>
+      <option value="full">Sin restricción (normal para su edad)</option>
+      <option value="amb500">Deambula ≥500 m sin ayuda (no ilimitada)</option>
+      <option value="m300">300-499 m sin ayuda</option>
+      <option value="m200">200-299 m sin ayuda</option>
+      <option value="m100">100-199 m sin ayuda</option>
+      <option value="u100">&lt;100 m sin ayuda</option>
+      <option value="u50">Ayuda unilateral, ≥50 m</option>
+      <option value="b120">Ayuda bilateral, ≥120 m</option>
+      <option value="u50b">Ayuda unilateral, &lt;50 m</option>
+      <option value="b5">Ayuda bilateral, ≥5 m pero &lt;120 m</option>
+      <option value="wheel">Silla de ruedas autónoma (no camina 5 m con ayuda)</option>
+      <option value="wheeldep">Silla con ayuda; solo unos pasos</option>
+      <option value="bed">Limitado a cama/silla, fuera de cama gran parte del día</option>
+      <option value="bed2">En cama gran parte del día; algún uso de brazos</option>
+      <option value="helpless">Encamado dependiente; comunica y come</option>
+      <option value="helpless2">Encamado dependiente total; no comunica/come</option>
     </select>
   </div>
   <div id="edss_fs"></div>
@@ -552,15 +557,14 @@ renderCampos();
 
 /* ===== EDSS con notas cualitativas ===== */
 const SF=[
-  {k:'V',name:'Visual (óptico)',g:['normal','escotoma; AV (corr.) mejor de 0,7 (20/30)','peor ojo: escotoma, AV 0,7-0,3 (20/30-20/59)','peor ojo: escotoma grande o ↓ campos moderada, AV 0,3-0,2 (20/60-20/99)','peor ojo: ↓ campos marcada, AV 0,2-0,1 (20/100-20/200); o gr.3 + mejor ojo ≤0,3 (20/60)','peor ojo AV <0,1 (20/200); o gr.4 + mejor ojo ≤0,3 (20/60)','grado 5 + mejor ojo AV ≤0,3 (20/60)']},
-  {k:'TE',name:'Tronco del encéfalo',g:['normal','solo signos','nistagmo moderado u otra discapacidad leve','nistagmo grave, paresia EO marcada o discapacidad moderada de otros pares','disartria marcada u otra discapacidad marcada','incapacidad para tragar o hablar']},
-  {k:'P',name:'Piramidal',g:['normal','signos sin discapacidad','discapacidad mínima','para/hemiparesia leve-moderada','paraparesia/hemiparesia marcada, cuadriparesia moderada o monoplejia','paraplejia/hemiplejia/tetraparesia marcada','tetraplejia']},
-  {k:'C',name:'Cerebeloso',g:['normal','signos sin discapacidad','ataxia leve','ataxia troncal/de miembros moderada','ataxia grave (todos los miembros)','no ejecuta movimientos coordinados por ataxia']},
-  {k:'S',name:'Sensitivo',g:['normal','↓ vibratoria/grafestesia solo, en 1-2 miembros','↓ leve tacto/dolor/posición y/o vibratoria moderada en 1-2 miembros; o vibratoria sola en 3-4','↓ moderada tacto/dolor/posición y/o vibratoria casi abolida en 1-2 miembros; o ↓ leve tacto/dolor y/o propiocepción moderada en 3-4','↓ marcada tacto/dolor o pérdida propiocepción en 1-2 miembros; o ↓ moderada tacto/dolor y/o propioceptiva grave en >2 miembros','pérdida sensitiva (esencial) en 1-2 miembros; o ↓ moderada tacto/dolor y/o propiocepción abolida en casi todo el cuerpo bajo la cabeza','sensibilidad esencialmente abolida bajo la cabeza']},
-  {k:'Esf',name:'Esfínteres (vejiga/intestino)',g:['normal','urgencia/retención leve','urgencia/retención moderada o incontinencia urinaria rara','incontinencia urinaria frecuente','sondaje casi constante','pérdida de función vesical','pérdida vesical e intestinal']},
-  {k:'Men',name:'Mental (cognición)',g:['normal','alteración del ánimo aislada (no puntúa EDSS)','disminución cognitiva leve','disminución cognitiva moderada','disminución cognitiva marcada (sd. cerebral crónico moderado)','demencia/síndrome cerebral crónico grave']},
+  {k:'V',name:'Visual (óptico)',g:['normal','palidez papilar y/o escotoma pequeño y/o AV peor ojo <1,0 pero >0,67 (20/30)','peor ojo AV 0,67-0,34 (20/30-20/59)','peor ojo escotoma grande/↓campos moderada y/o AV 0,33-0,21 (20/60-20/99)','peor ojo ↓campos marcada y/o AV 0,2-0,1 (20/100-20/200); o gr.3 + mejor ojo ≤0,33','peor ojo AV <0,1 (20/200); o gr.4 + mejor ojo ≤0,33','grado 5 + mejor ojo AV ≤0,33 (20/60)']},
+  {k:'TE',name:'Tronco del encéfalo',g:['normal','solo signos','nistagmo moderado y/o paresia EO moderada y/o otra incapacidad leve','nistagmo intenso y/o paresia EO marcada y/o incapacidad moderada de otros pares','disartria marcada y/o otra incapacidad marcada','incapacidad para tragar o hablar']},
+  {k:'P',name:'Piramidal',g:['normal','signos sin incapacidad','incapacidad mínima: fatigabilidad motora o BMRC 4 en 1-2 grupos','para/hemiparesia leve-moderada: BMRC 4 en >2 grupos, o BMRC 3 en 1-2, o monoparesia grave','para/hemiparesia marcada: BMRC 2 en 2 miembros o monoplejia; o cuadriparesia moderada (BMRC 3 en ≥3)','paraplejia (BMRC 0-1 en MMII); o cuadriparesia marcada (BMRC ≤2 en ≥3); o hemiplejia','cuadriplejia (BMRC 0-1 en MMSS y MMII)']},
+  {k:'C',name:'Cerebeloso',g:['normal','signos sin incapacidad','ataxia leve y/o ataxia de estación (Romberg) moderada y/o tándem imposible','ataxia moderada de miembros y/o ataxia de marcha/tronco moderada o grave','ataxia de marcha/tronco grave y ataxia grave en 3-4 miembros','incapaz de movimientos coordinados por ataxia']},
+  {k:'S',name:'Sensitivo',g:['normal','↓ leve vibratoria/grafestesia/temperatura en 1-2 miembros','↓ leve tacto/dolor/posición o vibratoria moderada en 1-2; o vibratoria/grafestesia/temp en >2','↓ moderada tacto/dolor/posición o vibratoria marcada en 1-2; o ↓ leve o propioceptiva moderada en >2','↓ marcada tacto/dolor en 1-2; o ↓ moderada tacto/dolor y/o propioceptiva marcada en >2','pérdida sensitiva en 1-2 miembros; o ↓ moderada tacto/dolor y/o propioceptiva marcada bajo la cabeza','sensibilidad esencialmente abolida bajo la cabeza']},
+  {k:'Esf',name:'Esfínteres (vejiga/intestino)',g:['normal','titubeo/urgencia urinaria leve y/o estreñimiento','titubeo/retención urinaria moderada y/o urgencia/incontinencia urinaria moderada y/o disfunción intestinal moderada','incontinencia urinaria frecuente o autocateterismo intermitente; precisa enemas/maniobras para evacuar','necesidad de cateterismo casi constante','pérdida de función vesical o intestinal; catéter externo o permanente','pérdida de función vesical e intestinal']},
+  {k:'Men',name:'Mental (funciones mentales)',g:['normal','solo signos de ↓ cognitiva; fatiga leve','↓ cognitiva leve; fatiga moderada o grave','↓ cognitiva moderada','↓ cognitiva marcada','demencia']},
 ];
-const FATIGA=['sin fatiga','leve: no interfiere con la actividad habitual','moderada: limita ≤50% de la actividad habitual','grave: limita >50% de la actividad habitual'];
 const st={};SF.forEach(s=>st[s.k]=0);
 const notes={};SF.forEach(s=>notes[s.k]='');
 const cont=$('edss_fs');
@@ -573,38 +577,87 @@ SF.forEach(s=>{
   cont.appendChild(b);
   b.querySelector('#note_'+s.k).oninput=e=>{notes[s.k]=e.target.value.trim();calcEDSS()};
 });
-// selector de fatiga (parte del FS Mental, escala 0-3, no modifica el EDSS)
-let fatigaVal=0;
-const fb=document.createElement('div');fb.className='fs-block';
-fb.innerHTML=`<div class="fs-head"><b>Fatiga</b> <span style="font-weight:400;color:var(--muted);font-size:11px">(no modifica el paso EDSS)</span><span class="fs-grade" id="grade_Fat">Fat 0</span></div>`+
-  FATIGA.map((lab,grade)=>`<label class="opt"><input type="radio" name="sf_Fat" value="${grade}" ${grade===0?'checked':''}><span class="lab"><b>${grade}</b> — ${lab}</span></label>`).join('');
-cont.appendChild(fb);
-fb.querySelectorAll('input[type=radio]').forEach(inp=>inp.onchange=()=>{fatigaVal=+inp.value;$('grade_Fat').textContent='Fat '+inp.value;calcEDSS()});
+// Conversiones Neurostatus de FS antes de calcular el paso EDSS
+const CONV_V={0:0,1:1,2:2,3:2,4:3,5:3,6:4};      // Visual: 6→4,5→3,4→3,3→2,2→2,1→1
+const CONV_ESF={0:0,1:1,2:2,3:3,4:3,5:4,6:5};     // Vejiga/intestino: 6→5,5→4,4→3,3→3,2→2,1→1
 function lowEDSS(grades){
+  // grades ya vienen convertidos
   const max=Math.max(...grades),c=g=>grades.filter(x=>x===g).length;
-  const n1=c(1),n2=c(2),n3=c(3),n4=c(4);let e=0,r='';
-  if(max===0){e=0;r='Todos los SF en 0 → 0.0'}
-  else if(max===1){if(n1===1){e=1;r='1 SF grado 1 → 1.0'}else{e=1.5;r=n1+' SF grado 1 → 1.5'}}
-  else if(max===2){if(n2===1){e=2;r='1 SF grado 2 → 2.0'}else if(n2===2){e=2.5;r='2 SF grado 2 → 2.5'}else if(n2<=4){e=3;r=n2+' SF grado 2 → 3.0'}else{e=3.5;r=n2+' SF grado 2 → 3.5'}}
-  else if(max===3){if(n3===1){if(n2===0){e=3;r='1 SF grado 3 → 3.0'}else if(n2<=2){e=3.5;r='1 grado 3 + '+n2+' grado 2 → 3.5'}else{e=4;r='1 grado 3 + ≥3 grado 2 → 4.0 (revisar deambulación)'}}else if(n3===2){e=3.5;r='2 SF grado 3 → 3.5'}else{e=4;r=n3+' SF grado 3 → 4.0 (revisar deambulación)'}}
-  else if(max===4){if(n4===1){e=4;r='1 SF grado 4 → 4.0 (revisar deambulación)'}else{e=4.5;r=n4+' SF grado 4 → ≥4.5 (deambulación)'}}
-  else{e=5;r='SF grado ≥5 → ≥5.0 (deambulación/clínica)'}
+  const n2=c(2),n3=c(3),n4=c(4);let e=0,r='';
+  if(max===0){e=0;r='todos los FS en 0 → 0.0'}
+  else if(max===1){const n1=c(1);if(n1===1){e=1;r='1 FS grado 1 → 1.0'}else{e=1.5;r=n1+' FS grado 1 → 1.5'}}
+  else if(max===2){if(n2===1){e=2;r='1 FS grado 2 → 2.0'}else if(n2===2){e=2.5;r='2 FS grado 2 → 2.5'}else{e=3;r=n2+' FS grado 2 → 3.0'}}
+  else if(max===3){
+    if(n3===1){
+      if(n2===0){e=3;r='1 FS grado 3 → 3.0'}
+      else if(n2<=2){e=3.5;r='1 FS grado 3 + '+n2+' FS grado 2 → 3.5'}
+      else{e=3.5;r='1 FS grado 3 + '+n2+' FS grado 2 → 3.5 (revisar)'}
+    } else {e=3.5;r=n3+' FS grado 3 → 3.5'}
+  }
+  else if(max===4){if(n4===1){e=4;r='1 FS grado 4 → 4.0 (si deambula ≥500 m)'}else{e=4.5;r=n4+' FS grado 4 → revisar deambulación'}}
+  else{e=5;r='FS grado ≥5 → ≥5.0 (deambulación/clínica)'}
   return{e,r};
 }
-const AMB={full:null,'500':{e:4,r:'≈500 m sin ayuda → ≥4.0'},'300':{e:4.5,r:'≈300 m → ≥4.5'},'200':{e:5,r:'≈200 m → ≥5.0'},'100':{e:5.5,r:'≈100 m → ≥5.5'},u100:{e:6,r:'100 m ayuda unilateral → 6.0'},u50:{e:6.5,r:'50 m ayuda unilateral → 6.5'},b120:{e:6.5,r:'120 m ayuda bilateral → 6.5'},b10:{e:7,r:'10 m ayuda bilateral → 7.0'},wheel:{e:7,r:'silla autopropulsada → ≥7.0'},wheeldep:{e:7.5,r:'silla dependiente → 7.5'},bed:{e:8,r:'encamado conserva brazos → 8.0'},bedtotal:{e:8.5,r:'encamado dependiente → ≥8.5'}};
+const AMB={
+  full:{e:0,r:'deambulación sin restricción'},
+  amb500:{e:0,r:'deambula ≥500 m sin ayuda (no ilimitada): EDSS ≤5.0 según FS'},
+  m300:{e:4.5,r:'300-499 m sin ayuda → EDSS 4.5-5.0'},
+  m200:{e:5,r:'200-299 m sin ayuda → EDSS 5.0'},
+  m100:{e:5.5,r:'100-199 m sin ayuda → EDSS 5.5'},
+  u100:{e:6,r:'<100 m sin ayuda → EDSS 6.0'},
+  u50:{e:6,r:'ayuda unilateral, ≥50 m → EDSS 6.0'},
+  b120:{e:6,r:'ayuda bilateral, ≥120 m → EDSS 6.0'},
+  u50b:{e:6.5,r:'ayuda unilateral, <50 m → EDSS 6.5'},
+  b5:{e:6.5,r:'ayuda bilateral, ≥5 m pero <120 m → EDSS 6.5'},
+  wheel:{e:7,r:'silla de ruedas autónoma (no camina 5 m con ayuda) → EDSS 7.0'},
+  wheeldep:{e:7.5,r:'silla con ayuda; solo unos pasos → EDSS 7.5'},
+  bed:{e:8,r:'limitado a cama/silla, fuera de cama gran parte del día; usa brazos → EDSS 8.0'},
+  bed2:{e:8.5,r:'en cama gran parte del día; algún uso de brazos → EDSS 8.5'},
+  helpless:{e:9,r:'encamado dependiente; comunica y come → EDSS 9.0'},
+  helpless2:{e:9.5,r:'encamado dependiente total; no comunica/come → EDSS 9.5'},
+};
 function calcEDSS(){
-  const grades=SF.map(s=>st[s.k]);const lo=lowEDSS(grades);const am=AMB[$('EDSS_amb').value];
-  let e=lo.e,r=lo.r;if(am&&am.e>e){e=am.e;r=am.r+' (deambulación domina)'}else if(am){r=lo.r+' · deambulación compatible'}
+  // Aplicar conversiones Neurostatus (Visual y Esfínteres) antes de calcular el paso.
+  const conv=SF.map(s=>{const v=st[s.k];if(s.k==='V')return CONV_V[v];if(s.k==='Esf')return CONV_ESF[v];return v;});
+  const lo=lowEDSS(conv);const am=AMB[$('EDSS_amb').value];
+  let e=lo.e,r=lo.r;
+  // La marcha domina cuando implica un EDSS ≥ al del tramo bajo (limitación <500 m → ≥4.5).
+  if(am&&am.e>e){e=am.e;r=am.r+' (deambulación domina)'}
+  else if(am&&am.e>0&&am.e===e){r=am.r}
+  else if(am&&($('EDSS_amb').value==='amb500')){r=lo.r+' · deambula ≥500 m (compatible)'}
   $('EDSS_v').textContent=e.toFixed(1);
   const fsShort=SF.map(s=>s.k+st[s.k]).join(' ');
   $('EDSS_fs').textContent=fsShort;$('EDSS_rule').textContent=r;
   const noteList=SF.filter(s=>notes[s.k]).map(s=>`${s.k}${st[s.k]}: ${notes[s.k]}`);
-  if(fatigaVal>0)noteList.push(`Fatiga ${fatigaVal}: ${FATIGA[fatigaVal]}`);
   window._EDSS_short=`EDSS ${e.toFixed(1)} (${fsShort})`;
   window._EDSS_full=`EDSS ${e.toFixed(1)} (${fsShort})`+(noteList.length?'\n  '+noteList.join('\n  '):'');
 }
 calcEDSS();
+const KURTZKE_HTML=`<div class="card" style="background:var(--panel2);font-size:13px;line-height:1.55">
+  <h2 style="margin-top:0">Instrucciones EDSS (Neurostatus)</h2>
+  <p class="mini" style="text-transform:none;letter-spacing:0">Kurtzke JF. Neurology 1983;33:1444-52. Definiciones Neurostatus (Kappos et al.). Versión de referencia; los selectores usan textos abreviados fieles a esta escala.</p>
+  <h3>Sistemas funcionales (FS)</h3>
+  <p><b>1. Visual (óptico)</b><br>0 normal · 1 palidez papilar y/o escotoma pequeño y/o AV (corregida) del peor ojo &lt;20/20 (1,0) pero >20/30 (0,67) · 2 peor ojo AV 20/30-20/59 (0,67-0,34) · 3 peor ojo escotoma grande y/o ↓campos moderada y/o AV 20/60-20/99 (0,33-0,21) · 4 peor ojo ↓campos marcada y/o AV 20/100-20/200 (0,2-0,1); o grado 3 + mejor ojo ≤20/60 (0,33) · 5 peor ojo AV &lt;20/200 (0,1); o grado 4 + mejor ojo ≤20/60 · 6 grado 5 + mejor ojo ≤20/60.</p>
+  <p><b>2. Tronco del encéfalo</b><br>0 normal · 1 solo signos · 2 nistagmo moderado y/o paresia EO moderada y/o otra incapacidad leve · 3 nistagmo intenso y/o paresia EO marcada y/o incapacidad moderada de otros pares · 4 disartria marcada y/o otra incapacidad marcada · 5 incapacidad para tragar o hablar.</p>
+  <p><b>3. Piramidal</b> (BMRC = fuerza 0-5)<br>0 normal · 1 signos anormales sin incapacidad · 2 incapacidad mínima: fatigabilidad motora o BMRC 4 en 1-2 grupos · 3 para/hemiparesia leve-moderada: BMRC 4 en >2 grupos, o BMRC 3 en 1-2, o monoparesia grave (BMRC ≤2 en un grupo) · 4 para/hemiparesia marcada: BMRC 2 en 2 miembros o monoplejia (BMRC 0-1); o cuadriparesia moderada (BMRC 3 en ≥3 miembros) · 5 paraplejia (BMRC 0-1 en MMII); o cuadriparesia marcada (BMRC ≤2 en ≥3); o hemiplejia · 6 cuadriplejia (BMRC 0-1 en MMSS y MMII).</p>
+  <p><b>4. Cerebeloso</b><br>0 normal · 1 signos sin incapacidad · 2 ataxia leve y/o ataxia de estación (Romberg) moderada y/o tándem imposible · 3 ataxia moderada de miembros y/o ataxia de marcha/tronco moderada o grave · 4 ataxia de marcha/tronco grave y ataxia grave en 3-4 miembros · 5 incapaz de movimientos coordinados por ataxia.<br><i>X</i> = añadir si debilidad piramidal (BMRC ≤3) o déficit sensitivo dificultan la prueba.</p>
+  <p><b>5. Sensitivo</b><br>0 normal · 1 ↓ leve vibratoria/grafestesia/temperatura en 1-2 miembros · 2 ↓ leve tacto/dolor/posición o vibratoria moderada en 1-2; y/o vibratoria/grafestesia/temperatura en >2 · 3 ↓ moderada tacto/dolor/posición o vibratoria marcada en 1-2; y/o ↓ leve tacto/dolor o propioceptiva moderada en >2 · 4 ↓ marcada tacto/dolor en 1-2; y/o ↓ moderada tacto/dolor y/o propioceptiva marcada en >2 · 5 pérdida (esencial) en 1-2 miembros; y/o ↓ moderada tacto/dolor y/o propioceptiva marcada en casi todo el cuerpo bajo la cabeza · 6 sensibilidad esencialmente abolida bajo la cabeza.</p>
+  <p><b>6. Vejiga e intestino</b><br>0 normal · 1 titubeo/urgencia urinaria leve y/o estreñimiento · 2 titubeo/retención urinaria moderada y/o urgencia/incontinencia urinaria moderada y/o disfunción intestinal moderada · 3 incontinencia urinaria frecuente o autocateterismo intermitente; precisa enemas/maniobras para evacuar · 4 necesidad de cateterismo casi constante · 5 pérdida de función vesical o intestinal; catéter externo o permanente · 6 pérdida de función vesical e intestinal.</p>
+  <p><b>7. Mental (cerebral)</b><br>0 normal · 1 solo signos de ↓ cognitiva; fatiga leve · 2 ↓ cognitiva leve; fatiga moderada o grave · 3 ↓ cognitiva moderada · 4 ↓ cognitiva marcada · 5 demencia.<br><i>Depresión/euforia</i> se registran pero NO cuentan para FS ni EDSS. <i>Fatiga:</i> en algunos estudios no contribuye al FS ni al EDSS; seguir las instrucciones del estudio.</p>
+  <h3>Conversión de FS para el paso EDSS</h3>
+  <p>Antes de calcular el paso, dos FS se convierten a un valor menor:<br><i>Visual:</i> 6→4 · 5→3 · 4→3 · 3→2 · 2→2 · 1→1.<br><i>Vejiga/intestino:</i> 6→5 · 5→4 · 4→3 · 3→3 · 2→2 · 1→1.<br>(La herramienta aplica estas conversiones automáticamente; la línea muestra los grados sin convertir.)</p>
+  <h3>Puntuación de marcha</h3>
+  <p>0 sin restricción · 1 deambula ≥500 m sin ayuda (no ilimitada) · 2 300-499 m sin ayuda (EDSS 4.5-5.0) · 3 200-299 m (EDSS 5.0) · 4 100-199 m (EDSS 5.5) · 5 &lt;100 m sin ayuda (EDSS 6.0) · 6 ayuda unilateral ≥50 m (6.0) · 7 ayuda bilateral ≥120 m (6.0) · 8 ayuda unilateral &lt;50 m (6.5) · 9 ayuda bilateral ≥5 m pero &lt;120 m (6.5) · 10 silla autónoma (7.0) · 11 silla con ayuda (7.5) · 12 cama/silla, fuera de cama gran parte del día (8.0).</p>
+  <h3>Pasos EDSS</h3>
+  <p>0 examen normal (todos los FS en 0) · 1.0 sin incapacidad, 1 FS grado 1 · 1.5 >1 FS grado 1 · 2.0 1 FS grado 2 · 2.5 2 FS grado 2 · 3.0 1 FS grado 3, o 3-4 FS grado 2 (deambula) · 3.5 1 FS grado 3 + 1-2 FS grado 2; o 2 FS grado 3; o 5 FS grado 2 · 4.0 deambula ≥500 m sin ayuda, activo ~12 h; 1 FS grado 4 o combinaciones · 4.5 deambula ≥300 m sin ayuda; 1 FS grado 4 y combinaciones · 5.0 deambula ≥200 m sin ayuda · 5.5 deambula ≥100 m sin ayuda · 6.0 ayuda unilateral para ≥100 m · 6.5 ayuda bilateral constante para ≥20 m · 7.0 silla de ruedas, autopropulsa y transfiere, ~12 h · 7.5 silla, ayuda para transferencias · 8.0 cama/silla, uso útil de brazos · 8.5 en cama gran parte del día, algún uso de brazos · 9.0 encamado, comunica y come · 9.5 encamado total, no comunica/come · 10 muerte por EM.</p>
+  <button class="copybtn" onclick="toggleKurtzke()">cerrar instrucciones</button>
+</div>`;
 function copyEDSS(){copyText(window._EDSS_full||'EDSS —')}
+function toggleKurtzke(){
+  const box=$('kurtzkeBox');
+  if(box.style.display==='none'){box.innerHTML=KURTZKE_HTML;box.style.display='block'}
+  else{box.style.display='none'}
+}
 function insertEDSS(){const el=$('i_expl');if(el){el.value=(el.value?el.value+'\n':'')+sanitizeDiraya(window._EDSS_full);genInforme();toast('EDSS volcado al informe')}else toast('Abre la pestaña Informe primero')}
 
 /* ===== ESCALAS EM (SDMT, T25FW, 9HPT) ===== */
