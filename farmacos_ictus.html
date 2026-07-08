@@ -1,0 +1,354 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Chuleta fármacos ictus · Guardia</title>
+<style>
+  :root{
+    --bg:#0f1216; --panel:#171b21; --panel2:#1d232b; --line:#2a323d;
+    --ink:#e7ecf2; --dim:#9aa7b5; --faint:#6b7885;
+    --isq:#2f81f7;      /* isquémico / trombólisis */
+    --hem:#e5484d;      /* hemorrágico / STOP */
+    --rev:#c47f2f;      /* reversión */
+    --ta:#8b5cf6;       /* tensión arterial */
+    --ok:#3fb950;
+    --mono:"SF Mono",ui-monospace,"JetBrains Mono",Menlo,Consolas,monospace;
+  }
+  *{box-sizing:border-box}
+  html,body{margin:0;background:var(--bg);color:var(--ink);
+    font-family:"Inter",-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;
+    -webkit-text-size-adjust:100%;line-height:1.4}
+  .wrap{max-width:960px;margin:0 auto;padding:16px 14px 60px}
+
+  header{display:flex;align-items:baseline;justify-content:space-between;
+    gap:10px;flex-wrap:wrap;border-bottom:1px solid var(--line);padding-bottom:10px;margin-bottom:14px}
+  h1{font-size:19px;margin:0;letter-spacing:-.01em}
+  h1 span{color:var(--isq)}
+  .src{font-size:11px;color:var(--faint);font-family:var(--mono)}
+
+  .nav{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:16px}
+  .nav a{font-size:12px;text-decoration:none;color:var(--dim);
+    border:1px solid var(--line);border-radius:999px;padding:5px 11px;background:var(--panel)}
+  .nav a:hover{border-color:var(--isq);color:var(--ink)}
+
+  section{margin-bottom:26px;scroll-margin-top:12px}
+  .sec-head{display:flex;align-items:center;gap:9px;margin-bottom:10px}
+  .sec-head h2{font-size:14px;margin:0;text-transform:uppercase;letter-spacing:.08em;font-weight:700}
+  .tag{width:10px;height:10px;border-radius:2px;flex:none}
+  .t-isq{background:var(--isq)} .t-hem{background:var(--hem)}
+  .t-rev{background:var(--rev)} .t-ta{background:var(--ta)}
+
+  .grid{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+  @media(max-width:640px){.grid{grid-template-columns:1fr}}
+
+  .card{background:var(--panel);border:1px solid var(--line);border-radius:10px;
+    padding:12px 13px;border-left:3px solid var(--line)}
+  .card.isq{border-left-color:var(--isq)}
+  .card.hem{border-left-color:var(--hem)}
+  .card.rev{border-left-color:var(--rev)}
+  .card.ta{border-left-color:var(--ta)}
+  .card h3{margin:0 0 2px;font-size:15px;letter-spacing:-.01em}
+  .card .pres{font-size:11px;color:var(--faint);font-family:var(--mono);margin-bottom:8px}
+
+  .dose{font-family:var(--mono);font-size:14px;color:var(--ink);
+    background:var(--panel2);border-radius:6px;padding:7px 9px;margin:5px 0;line-height:1.45}
+  .dose b{color:var(--isq)}
+  .card.hem .dose b, .card.rev .dose b{color:var(--rev)}
+  .card.ta .dose b{color:var(--ta)}
+  .lbl{display:block;font-size:10px;text-transform:uppercase;letter-spacing:.06em;
+    color:var(--faint);margin-bottom:2px;font-family:var(--mono)}
+
+  ul.mini{margin:6px 0 0;padding-left:16px;font-size:12.5px;color:var(--dim)}
+  ul.mini li{margin:2px 0}
+  .note{font-size:12px;color:var(--dim);margin-top:7px}
+  .crit{color:var(--hem);font-weight:600}
+  .green{color:var(--ok)}
+
+  table{width:100%;border-collapse:collapse;font-size:12.5px;margin-top:4px}
+  th,td{text-align:left;padding:6px 8px;border-bottom:1px solid var(--line)}
+  th{font-size:10px;text-transform:uppercase;letter-spacing:.05em;color:var(--faint);font-weight:600}
+  td.n{font-family:var(--mono);white-space:nowrap}
+
+  .banner{background:var(--panel2);border:1px solid var(--line);border-radius:8px;
+    padding:10px 12px;font-size:12.5px;color:var(--dim);margin-bottom:14px}
+  .banner b{color:var(--ink)}
+
+  .foot{margin-top:30px;padding-top:12px;border-top:1px solid var(--line);
+    font-size:11px;color:var(--faint);line-height:1.6}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+<header>
+  <h1><span>⚡</span> Ictus · fármacos y dosis de guardia</h1>
+  <div class="src">Protocolo Neurovascular 2026 · HUVR / HUV Macarena</div>
+</header>
+
+<div class="banner">
+  <b>Consulta rápida.</b> Dosis, umbrales e indicaciones tomadas literalmente del protocolo.
+  Verifica peso, glucemia y TA antes de cualquier reperfusión. No sustituye al documento completo.
+</div>
+
+<nav class="nav">
+  <a href="#trombolisis">Trombólisis</a>
+  <a href="#tm">Trombectomía / stent</a>
+  <a href="#ta">Control TA</a>
+  <a href="#reversion">Reversión anticoag.</a>
+  <a href="#hic">HIC / HSA</a>
+  <a href="#compl">Complicaciones</a>
+  <a href="#perf">Perfusiones (Anexo II)</a>
+</nav>
+
+<!-- ============ TROMBÓLISIS ============ -->
+<section id="trombolisis">
+  <div class="sec-head"><span class="tag t-isq"></span><h2>Trombólisis IV</h2></div>
+
+  <div class="banner" style="margin-bottom:12px">
+    Requisitos previos comunes: <b>glucemia &gt;50 y &lt;180 mg/dl</b> ·
+    <b>TAS ≤185 / TAD ≤105 mmHg</b> · vía IV exclusiva.
+    Guía europea 2021 / americana 2026 recomiendan <b>tenecteplasa sobre alteplasa</b>,
+    sobre todo &lt;4,5 h y si va a trombectomía.
+  </div>
+
+  <div class="grid">
+    <div class="card isq">
+      <h3>Tenecteplasa (TNK)</h3>
+      <div class="pres">Metalyse® · vial 5000 U (25 mg) · reconstituido 5 mg/ml</div>
+      <div class="dose"><span class="lbl">Dosis</span><b>0,25 mg/kg</b> · máx <b>25 mg</b></div>
+      <div class="dose"><span class="lbl">Administración</span>Bolo IV único en ~5–10 s. Enjuagar vía después.</div>
+      <div class="note">Ventaja: bolo sin perfusión posterior. Glucemia &gt;50 y &lt;400 mg/dl.</div>
+    </div>
+
+    <div class="card isq">
+      <h3>Alteplasa (rt-PA)</h3>
+      <div class="pres">Actilyse® · viales 20 y 50 mg · reconstituido 1 mg/ml</div>
+      <div class="dose"><span class="lbl">Dosis</span><b>0,9 mg/kg</b> · máx <b>90 mg</b></div>
+      <div class="dose"><span class="lbl">Pauta</span><b>10 %</b> en bolo IV en 1 min → esperar 3–5 min → <b>90 %</b> en 60 min con bomba. Purgar con 30–50 ml SF 0,9 % al terminar.</div>
+      <div class="note">Ej. 80 kg → 72 mg: bolo 7,2 ml + 64,8 ml en 60 min.</div>
+    </div>
+  </div>
+
+  <div class="card isq" style="margin-top:10px">
+    <h3 style="font-size:13px">Vigilancia post-fibrinólisis (24 h)</h3>
+    <ul class="mini">
+      <li>TA: cada 15 min ×2 h → cada 30 min ×6 h → cada hora ×16 h.</li>
+      <li><span class="crit">Parar</span> infusión si &gt;180/105; avisar si &gt;185/105 (riesgo transformación hemorrágica).</li>
+      <li>Neurológico: escala canadiense horaria las primeras 24 h.</li>
+      <li>Reposo cama 30–40°; Trendelenburg contraindicado. SF ≥1000 ml/24 h, <span class="crit">nunca glucosados</span>.</li>
+      <li>Cefalea / náuseas / somnolencia / empeoramiento → sospechar sangrado → TC.</li>
+    </ul>
+  </div>
+</section>
+
+<!-- ============ TROMBECTOMÍA / STENT ============ -->
+<section id="tm">
+  <div class="sec-head"><span class="tag t-isq"></span><h2>Trombectomía · antiagregación periprocedimiento</h2></div>
+  <div class="grid">
+    <div class="card isq">
+      <h3 style="font-size:13px">Durante el procedimiento</h3>
+      <ul class="mini">
+        <li>PAS objetivo <b>140–180 mmHg</b> durante y 24 h post.</li>
+        <li>No anticoagulación sistémica (salvo SF heparinizado).</li>
+        <li>Ateroma extra/intracraneal con stent/angioplastia sin doble antiagregación previa → <b>tirofibán IV</b> preferente.</li>
+        <li>Intracraneal si insuficiente: añadir <b>Inyesprín® 250–500 mg</b>.</li>
+      </ul>
+    </div>
+    <div class="card isq">
+      <h3 style="font-size:13px">Tras stent</h3>
+      <ul class="mini">
+        <li><b>Extracraneal:</b> iniciar a 24 h (si fibrinólisis y sin hemorragia). AAS 100 (carga 300) + clopidogrel 75 (carga 300) ×1 mes → AAS 100 indefinido.</li>
+        <li><b>Intracraneal:</b> doble antiagregación ×3 meses.</li>
+        <li>Alergia AAS → triflusal 600 mg/día. Intolerancia/resistencia clopidogrel → ticagrelor 90/12 h (carga 180).</li>
+      </ul>
+    </div>
+  </div>
+</section>
+
+<!-- ============ CONTROL TA ============ -->
+<section id="ta">
+  <div class="sec-head"><span class="tag t-ta"></span><h2>Umbrales y control de TA</h2></div>
+  <div class="card ta">
+    <table>
+      <thead><tr><th>Escenario</th><th>Objetivo / umbral de tratar</th></tr></thead>
+      <tbody>
+        <tr><td>Isquémico sin reperfusión (&lt;24–48 h)</td><td class="n">tratar solo si &gt;220/120 → bajar 15 % en 24 h</td></tr>
+        <tr><td>Pre-fibrinólisis / pre-TM</td><td class="n">&lt;185/110 mmHg</td></tr>
+        <tr><td>Post-fibrinólisis / post-TM (24 h)</td><td class="n">&lt;180/105 mmHg</td></tr>
+        <tr><td>HIC espontánea &lt;6 h</td><td class="n">TAS &lt;140 en &lt;1 h · no bajar &gt;70 mmHg ni &lt;110</td></tr>
+        <tr><td>HSA</td><td class="n">TAS &lt;180, evitar fluctuaciones</td></tr>
+        <tr><td>Post-endarterectomía / stent carotídeo</td><td class="n">tratar si TAS &gt;160</td></tr>
+        <tr><td>Sd. hiperperfusión post-stent</td><td class="n">&lt;140/80 mmHg</td></tr>
+      </tbody>
+    </table>
+  </div>
+  <div class="grid" style="margin-top:10px">
+    <div class="card ta">
+      <h3>Labetalol</h3>
+      <div class="pres">Trandate® 100 mg/20 ml (5 mg/ml)</div>
+      <div class="dose"><b>10–20 mg</b> IV en 1–2 min · repetir 1 vez (bolos de 10 mg c/5–10 min, máx 3)</div>
+      <div class="note">Evitar si FC &lt;60, asma/EPOC, BAV, IC. → perfusión si no controla.</div>
+    </div>
+    <div class="card ta">
+      <h3>Urapidilo</h3>
+      <div class="pres">Elgadil® 50 mg/10 ml</div>
+      <div class="dose"><b>12,5–25 mg</b> (½ amp) IV en bolo lento · hasta 3 bolos → perfusión</div>
+    </div>
+    <div class="card ta">
+      <h3>Clevidipino</h3>
+      <div class="pres">Cleviprex® 0,5 mg/ml</div>
+      <div class="dose"><b>4 ml/h (2 mg/h)</b> · duplicar c/90 s hasta objetivo · máx 64 ml/h</div>
+    </div>
+    <div class="card ta">
+      <h3>Nitroprusiato</h3>
+      <div class="pres">amp 50 mg · alternativa si fallan los anteriores</div>
+      <div class="dose"><b>0,5–1 µg/kg/min</b> · máx 10 µg/kg/min</div>
+    </div>
+  </div>
+</section>
+
+<!-- ============ REVERSIÓN ============ -->
+<section id="reversion">
+  <div class="sec-head"><span class="tag t-rev"></span><h2>Reversión de anticoagulación (HIC / sangrado)</h2></div>
+  <div class="grid">
+    <div class="card rev">
+      <h3>Heparina sódica</h3>
+      <div class="pres">Sulfato de protamina · vial 50 mg/5 ml · monitorizar TTPA</div>
+      <div class="dose">Bolo inmediato: <b>1 mg / 100 U</b> · &gt;30 min: 0,5 mg/100 U · perfusión: 0,5 mg/mg de la última hora. Máx <b>50 mg</b>, IV lento.</div>
+      <div class="note">No neutralizar si &gt;4 h. Exceso de protamina = anticoagulante.</div>
+    </div>
+    <div class="card rev">
+      <h3>HBPM</h3>
+      <div class="pres">Sulfato de protamina (menos eficaz)</div>
+      <div class="dose">&lt;8 h: <b>1 mg / 100 U</b> (+0,5 mg/100 U si persiste sangrado) · &gt;8 h: consultar Hematología.</div>
+    </div>
+    <div class="card rev">
+      <h3>Anti-vitamina K (INR &gt;1,3)</h3>
+      <div class="pres">CCP vial 600 U/10 ml (máx 5000 U) + Vit K</div>
+      <table>
+        <tr><td>INR 1,3–2</td><td class="n">15 U/kg</td></tr>
+        <tr><td>INR 2–4</td><td class="n">25 U/kg</td></tr>
+        <tr><td>INR 4–6</td><td class="n">35 U/kg</td></tr>
+        <tr><td>INR &gt;6</td><td class="n">50 U/kg</td></tr>
+      </table>
+      <div class="note">+ Vitamina K 10 mg (1 amp) IV lenta &gt;30 s. Control INR 12–24 h. Sin CCP → plasma fresco 10 ml/kg.</div>
+    </div>
+    <div class="card rev">
+      <h3>Dabigatrán</h3>
+      <div class="pres">Idarucizumab (antídoto específico)</div>
+      <div class="dose"><b>2 × 2,5 g</b> IV directa lenta consecutivos</div>
+      <div class="note">Última toma &lt;12 h (24–36 h si IRC). Si hora desconocida, guiar por TT (no dar si TT normal). Alternativa: CCP activado (FEIBA®) 50 U/kg.</div>
+    </div>
+    <div class="card rev">
+      <h3>Anti-Xa (rivaroxabán / apixabán / edoxabán)</h3>
+      <div class="pres">Andexanet alfa (no disponible) → CCP convencional</div>
+      <div class="dose">CCP (Prothromplex®) <b>50 U/kg</b>, repetible a las 2 h.</div>
+      <div class="note">Si andexanet disponible y HIC &lt;6 h, última toma &lt;15 h (o aXa &gt;100 ng/ml):</div>
+      <ul class="mini">
+        <li><b>Dosis baja:</b> 400 mg bolo + 480 mg (4 mg/min ×2 h). Riva ≤10 / apix ≤5 / edox ≤30 mg, o &gt;8 h.</li>
+        <li><b>Dosis alta:</b> 800 mg bolo + 960 mg (8 mg/min ×2 h). Dosis mayores con última toma ≤8 h.</li>
+      </ul>
+    </div>
+    <div class="card rev">
+      <h3>Complicaciones fibrinólisis</h3>
+      <ul class="mini">
+        <li><b>Hemorragia:</b> parar infusión, TC, crioprecipitado 10 U (objetivo fibrinógeno &gt;150) + ác. tranexámico (Amchafibrin®) 1000 mg IV en 100 ml SF/10 min.</li>
+        <li><b>Angioedema por rt-PA:</b> parar, no IECA, metilprednisolona 125 mg IV + dexclorfeniramina 1 amp/6 h; adrenalina 0,3 sc si progresa; icatibant 30 mg sc refractario.</li>
+      </ul>
+    </div>
+  </div>
+</section>
+
+<!-- ============ HIC / HSA ============ -->
+<section id="hic">
+  <div class="sec-head"><span class="tag t-hem"></span><h2>HIC espontánea &amp; HSA</h2></div>
+  <div class="grid">
+    <div class="card hem">
+      <h3 style="font-size:13px">HIC · tiempos clave</h3>
+      <ul class="mini">
+        <li>&lt;30 min: iniciar control intensivo de PA + reversión anticoagulación.</li>
+        <li>&lt;60 min: conseguir <b>TAS &lt;140</b> + valoración NQ precoz.</li>
+        <li>7 días: mantener TAS &lt;140, normoglucemia, Tª &lt;37,5.</li>
+        <li>Glucemia objetivo 140–180 (evitar hipoglucemia); insulina si &gt;180.</li>
+        <li>Evitar bolos repetidos → perfusión precoz (urapidilo / clevidipino / labetalol).</li>
+      </ul>
+    </div>
+    <div class="card hem">
+      <h3 style="font-size:13px">HSA · tratamiento médico</h3>
+      <ul class="mini">
+        <li><b>Nimodipino</b> 60 mg VO/SNG cada 4 h ×21 días (IV si no VO: vial 0,2 mg/ml).</li>
+        <li>TAS &lt;180, evitar fluctuaciones (labetalol / nicardipino en perfusión).</li>
+        <li>Reposo, SF 1,5–3 l/día (euvolemia). Antieméticos + laxantes (evitar ↑PIC).</li>
+        <li>Crisis: levetiracetam 500 mg/12 h (carga 1000 mg IV).</li>
+        <li>Antifibrinolíticos no de rutina; si retraso inevitable &lt;72 h puede valorarse.</li>
+      </ul>
+    </div>
+  </div>
+</section>
+
+<!-- ============ COMPLICACIONES ============ -->
+<section id="compl">
+  <div class="sec-head"><span class="tag t-hem"></span><h2>Complicaciones sistémicas</h2></div>
+  <div class="grid">
+    <div class="card">
+      <h3 style="font-size:13px">Generales</h3>
+      <ul class="mini">
+        <li><b>O₂</b> si SatO₂ &lt;94 % (gafas 2–4 lpm).</li>
+        <li><b>Fiebre</b> &gt;37,5: paracetamol + medidas físicas (no profilaxis ATB).</li>
+        <li><b>Glucemia:</b> objetivo 140–180; insulina si &gt;140–180; hipoglucemia &lt;50–60 con dextrosa.</li>
+        <li><b>Profilaxis TVP:</b> enoxaparina 40 mg/24 h sc (20 si IR) — isquémico día 1, hemorrágico día 3 tras TC.</li>
+      </ul>
+    </div>
+    <div class="card">
+      <h3 style="font-size:13px">Cardio-vascular</h3>
+      <ul class="mini">
+        <li><b>FA/flutter:</b> control frecuencia con betabloqueante (verapamilo/diltiazem si asma/EPOC); 2.ª línea digoxina/amiodarona. Cardioversión contraindicada en fase aguda.</li>
+        <li><b>Bradicardia sintomática:</b> atropina 0,5–1 mg IV.</li>
+        <li><b>IC congestiva:</b> nitroprusiato 0,5–1 µg/kg/min + furosemida; dopamina si TAS &lt;90.</li>
+        <li><b>Hipotensión post-carotídeo:</b> SF; dopamina 4–10 µg/kg/min si sintomático.</li>
+      </ul>
+    </div>
+  </div>
+</section>
+
+<!-- ============ PERFUSIONES ============ -->
+<section id="perf">
+  <div class="sec-head"><span class="tag t-ta"></span><h2>Perfusiones · preparación (Anexo II)</h2></div>
+  <div class="card ta">
+    <table>
+      <thead><tr><th>Fármaco</th><th>Dilución</th><th>Inicio</th><th>Máx</th></tr></thead>
+      <tbody>
+        <tr>
+          <td><b>Labetalol</b></td>
+          <td class="n">5 amp (500 mg) en 250 cc → 2 mg/ml</td>
+          <td class="n">1 mg/min = 30 cc/h</td>
+          <td class="n">4 mg/min = 120 cc/h</td>
+        </tr>
+        <tr>
+          <td><b>Urapidilo</b></td>
+          <td class="n">5 amp + SF → 250 cc (1 mg/ml) o 500 cc (0,5 mg/ml)</td>
+          <td class="n">5–10 mg/h (↑ de 10 en 10)</td>
+          <td class="n">90 mg/h · máx 7 días</td>
+        </tr>
+        <tr>
+          <td><b>Clevidipino</b></td>
+          <td class="n">Cleviprex® 0,5 mg/ml (vial 50 mg/100 ml)</td>
+          <td class="n">4 ml/h (2 mg/h)</td>
+          <td class="n">64 ml/h (32 mg/h) · ≤500 mg/24 h</td>
+        </tr>
+      </tbody>
+    </table>
+    <div class="note">Labetalol: control TA y FC c/15 min. Clevidipino: contraindicado en trastornos del metabolismo lipídico.</div>
+  </div>
+</section>
+
+<div class="foot">
+  Fuente: <b>Protocolo de patología neuro-vascular 2026</b> — Hospital Universitario Virgen del Rocío y Virgen Macarena (Sevilla).
+  Todas las dosis, umbrales e indicaciones están transcritas del documento; ante discrepancia, prevalece el protocolo original.
+  Confirma peso, función renal, glucemia, TA y contraindicaciones antes de administrar. Herramienta de apoyo, no orden médica.
+</div>
+
+</div>
+</body>
+</html>
