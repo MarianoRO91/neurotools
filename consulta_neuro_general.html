@@ -129,6 +129,7 @@
     <div>
       <div class="card">
         <h2>Datos estructurados <button class="btn ghost sm" onclick="limpiarInforme()">Limpiar</button></h2>
+        <div id="plantillasBar"></div>
         <div id="campos"></div>
         <button class="btn" onclick="genInforme()">Generar informe</button>
       </div>
@@ -188,6 +189,7 @@
     <h2>Tratamientos farmacológicos</h2>
     <p class="mini">Orden alfabético. Cada fármaco despliega sus indicaciones con la pauta habitual para cada una. Principios activos en mayúscula. El plan es editable y se guarda; al copiar o volcar se inserta solo el plan (texto para el paciente). Pautas orientativas: revisar antes de prescribir.</p>
     <div class="flex" style="margin-top:8px"><button class="btn ghost sm" onclick="resetPlans()">Restaurar planes por defecto</button></div>
+    <input type="text" id="farmSearch" placeholder="🔍 Buscar fármaco o indicación (p. ej. triptán, migraña, temblor…)" oninput="filterFarmacos(this.value)" style="width:100%;margin-top:10px;padding:9px 12px;border-radius:8px;border:1px solid var(--line);background:var(--panel);color:var(--ink);font-size:14px">
   </div>
   <div id="tratHost"></div>
 </section>
@@ -234,32 +236,41 @@ const CAMPOS_PRI=[
   ['plan','Plan','PLAN'],
 ];
 const CAMPOS_SEG=[
-  ['evolucion','Evolución','EVOLUCIÓN'],
-  ['ttohab','Tratamiento habitual','TRATAMIENTO HABITUAL'],
+  ['seguim','En seguimiento por','',true],
+  ['ttohab','Tratamiento habitual','TH:'],
+  ['evolucion','Evolución',''],
   ['expl','Exploración','EXPLORACIÓN'],
   ['pc','Pruebas complementarias','PRUEBAS COMPLEMENTARIAS'],
-  ['jc','Juicio clínico','JUICIO CLÍNICO',true],
-  ['plan','Plan','PLAN'],
+  ['jc','Juicio clínico','JC:',true],
+  ['plan','Plan','PLAN:'],
 ];
 let tipoActual='primera';
 $('tipoInforme').querySelectorAll('button').forEach(b=>{
   b.onclick=()=>{$('tipoInforme').querySelectorAll('button').forEach(x=>x.classList.remove('on'));b.classList.add('on');tipoActual=b.dataset.tipo;renderCampos();}
 });
 function curCampos(){return tipoActual==='primera'?CAMPOS_PRI:CAMPOS_SEG}
+const _campoStore={};
 function renderCampos(){
-  const cc=$('campos');cc.innerHTML='';
+  const cc=$('campos');
+  // guardar lo escrito antes de reconstruir, para no perderlo al cambiar de tipo
+  cc.querySelectorAll('textarea[id^="i_"]').forEach(t=>{_campoStore[t.id]=t.value});
+  cc.innerHTML='';
   curCampos().forEach(c=>{
     const d=document.createElement('div');d.className='row';
     const small=c[3]?' campo-sm':'';
     let extraBtns='';
-    if(c[0]==='expl'){extraBtns=`<span class="btns"><button class="copybtn" onclick="insertExpl(EXPL.cribado)">cribado</button><button class="copybtn" onclick="insertExpl(EXPL.enrl)">ENRL det.</button></span>`}
+    if(c[0]==='expl'){extraBtns=`<span class="btns" id="explBtns"></span>`}
     if(c[0]==='ttohab'){extraBtns=`<span class="btns"><button class="copybtn" onclick="formatTto()">formatear</button></span>`}
     if(c[0]==='pc'){extraBtns=`<span class="btns" id="pcBtns"></span>`}
     if(c[0]==='plan'){extraBtns=`<span class="btns" id="planBtns"></span>`}
-    cc.appendChild(mkField(c,small,extraBtns));
+    const field=mkField(c,small,extraBtns);
+    cc.appendChild(field);
+    if(_campoStore['i_'+c[0]]!==undefined)$('i_'+c[0]).value=_campoStore['i_'+c[0]];
   });
+  buildExplBtns();
   buildPcBtns();
   buildPlanBtns();
+  buildPlantillasBar();
   // precargar antecedentes por defecto en primera visita si está vacío
   if(tipoActual==='primera' && $('i_ant') && !$('i_ant').value){
     $('i_ant').value=ANT_TXT;
@@ -301,8 +312,15 @@ function buildPlanBtns(){
   const host=$('planBtns');if(!host)return;
   _petSel=[];
   let html=PETICIONES.map(p=>`<button class="copybtn petbtn" data-p="${p}" onclick="togglePeticion(this)">${p}</button>`).join('');
+  html+=` <button class="copybtn" onclick="insertTo('plan','Mantener tratamiento sin cambios')">tto sin cambios</button>`;
   html+=` <span style="display:inline-flex;align-items:center;gap:4px"><button class="copybtn" onclick="addRevision('6m')">Rev. 6m</button><button class="copybtn" onclick="addRevision('anual')">Rev. anual</button><button class="copybtn" onclick="addRevision('pruebas')">Rev. con pruebas</button></span>`;
   host.innerHTML=html;
+}
+// Botones de plantilla de exploración dentro del campo del informe
+function buildExplBtns(){
+  const host=$('explBtns');if(!host)return;
+  const btns=[['cribado','cribado'],['enrl','ENRL det.'],['cognitivo','cognitivo'],['parkinson','parkinson'],['migrana','migraña'],['epilepsia','epilepsia']];
+  host.innerHTML=btns.map(b=>`<button class="copybtn" onclick="insertExpl(EXPL['${b[0]}'])">${b[1]}</button>`).join('');
 }
 function togglePeticion(btn){
   const p=btn.dataset.p;
@@ -330,9 +348,24 @@ function mkField(c,small,extraBtns){
 }
 function v(id){const el=$(id);return el?(el.value||'').trim():''}
 function buildInforme(){
-  const head=tipoActual==='primera'?'INFORME DE PRIMERA VISITA - CONSULTA DE NEUROLOGÍA':'INFORME DE SEGUIMIENTO - CONSULTA DE NEUROLOGÍA';
+  if(tipoActual!=='primera') return buildSeguimiento();
+  const head='INFORME DE PRIMERA VISITA - CONSULTA DE NEUROLOGÍA';
   let L=[head,'='.repeat(head.length)];
   curCampos().forEach(c=>{const val=v('i_'+c[0]);if(val)L.push('\n'+c[2]+'\n'+val)});
+  return sanitizeDiraya(L.join('\n'));
+}
+function buildSeguimiento(){
+  // Formato de seguimiento: sin encabezados de informe.
+  const L=[];
+  const seguim=v('i_seguim'), th=v('i_ttohab'), evol=v('i_evolucion'),
+        expl=v('i_expl'), pc=v('i_pc'), jc=v('i_jc'), plan=v('i_plan');
+  if(seguim) L.push('En seguimiento por '+seguim.replace(/\.$/,'')+'.');
+  if(th) L.push('\nTH: '+th);
+  if(evol) L.push('\n'+evol);
+  if(expl) L.push('\nEXPLORACIÓN\n'+expl);
+  if(pc) L.push('\nPRUEBAS COMPLEMENTARIAS\n'+pc);
+  if(jc) L.push('\nJC: '+jc);
+  if(plan) L.push('\nPLAN:\n'+plan);
   return sanitizeDiraya(L.join('\n'));
 }
 function genInforme(){$('out_informe').textContent=buildInforme()}
@@ -456,10 +489,82 @@ const EXPL={
 - SENSITIVO: no hipoestesia ni hipopalestesia apendicular
 - MARCHA Y COORDINACIÓN: marcha fisiológica, tándem posible, Romberg negativo. No dismetría apendicular`,
   cognitivo:`Consciente, atento/a, orientado/a en las tres esferas. Lenguaje normofluente sin elementos disfásicos. No disartria. Memoria 3/3. Cálculo conservado. No apraxia bimanual por imitación. Maniobras alternantes preservadas. No reflejos de liberación frontal. Movimientos oculares sin alteraciones relevantes. No signos de parkinsonismo ni piramidalismo. Marcha fisiológica para la edad.`,
-  parkinson:`FFSS globalmente conservadas. Hipomimia leve. Glabelar inagotable. Restricción en supraversión. Bradicinesia bilateral de predominio [D/I]. RRD asimétrica peor [D/I]. Temblor de reposo. Marcha con escaso braceo y anteversión de tronco. Descomposición de giros. Inestabilidad leve en pull-test. No datos de afectación piramidal ni cerebelosa.`,
+  parkinson:`FFSS globalmente conservadas. Hipomimia leve. Glabelar inagotable. Restricción en supraversión. Bradicinesia bilateral de predominio derecho. RRD asimétrica peor derecha. Temblor de reposo. Marcha con escaso braceo y anteversión de tronco. Descomposición de giros. Inestabilidad leve en pull-test. No datos de afectación piramidal ni cerebelosa.`,
+  migrana:`Exploración neurológica normal incluyendo fondo de ojo (papilas de bordes nítidos, no edema). No focalidad neurológica. MOEs sin restricciones, no diplopia ni nistagmo. No rigidez de nuca. Palpación de nervios pericraneales y musculatura cervical sin sensibilización relevante.`,
+  epilepsia:`FFSS conservadas, sin datos de focalidad postcrítica. Lenguaje normofluente. PPCC sin alteraciones. Balance muscular 5/5 global, REM simétricos, RCPFB. No hipoestesia. Marcha y coordinación normales. No mordedura lingual ni otros signos de crisis reciente en el momento de la exploración.`,
   cefalea:`Exploración neurológica normal incluyendo fondo de ojo. No sensibilización de nervios pericraneales.`,
 };
-const EXPL_TABS=[['cribado','Cribado'],['enrl','ENRL detallada'],['cognitivo','Deterioro cognitivo'],['parkinson','Parkinson'],['cefalea','Cefalea']];
+// ===== PLANTILLAS DE SEGUIMIENTO COMPLETAS POR PATOLOGÍA =====
+// Rellenan de un tirón los campos del informe de seguimiento. Todo es editable.
+const PLANTILLAS_SEG={
+  migrana:{
+    label:'Migraña',
+    seguim:'migraña __ (episódica / crónica) sin aura',
+    th:'__ (p. ej. metoprolol 50 mg 1-0-0)',
+    evolucion:`Frecuencia actual: __ días de cefalea al mes (__ días de migraña).
+Analgésicos de rescate: __ días al mes (__).
+Respuesta al tratamiento preventivo: __. Tolerancia: __.
+No datos de alarma: no cefalea de inicio súbito, no empeoramiento progresivo, no focalidad, no síntomas sistémicos.`,
+    expl:'migrana',
+    jc:'migraña __ (episódica / crónica)',
+    plan:['Mantener tratamiento sin cambios','Rescate: triptán al inicio de la crisis, no más de 2 días/semana (evitar cefalea por abuso de medicación)','Diario de cefaleas','Revisión en __ meses']
+  },
+  parkinson:{
+    label:'Parkinson',
+    seguim:'enfermedad de Parkinson HyY __',
+    th:'__ (p. ej. Sinemet plus 100/25 mg 1-1-1)',
+    evolucion:`Situación motora: __. Fluctuaciones: __ (no / wearing-off / discinesias). Tiempo OFF aproximado: __.
+Síntomas no motores: sueño __, ánimo __, estreñimiento __, síntomas urinarios __, hipotensión ortostática __.
+Estabilidad de la marcha: __. Caídas: __.`,
+    expl:'parkinson',
+    jc:'enfermedad de Parkinson',
+    plan:['Mantener tratamiento sin cambios','Ejercicio físico regular','Revisión en __ meses']
+  },
+  cognitivo:{
+    label:'Deterioro cognitivo',
+    seguim:'deterioro cognitivo __ (DCL / demencia) de perfil __',
+    th:'__ (p. ej. donepezilo 10 mg 0-0-1)',
+    evolucion:`Evolución cognitiva referida por la familia: __ (estable / empeoramiento leve).
+Autonomía: actividades básicas __, actividades instrumentales __.
+Síntomas conductuales/psicológicos: __ (no / apatía / ansiedad / insomnio / agitación).
+Tolerancia al tratamiento: __.`,
+    expl:'cognitivo',
+    jc:'deterioro cognitivo __',
+    plan:['Mantener tratamiento sin cambios','Medidas no farmacológicas: estimulación cognitiva, rutina, higiene de sueño, ejercicio','Apoyo a la familia/cuidador','Revisión en __ meses']
+  },
+  epilepsia:{
+    label:'Epilepsia',
+    seguim:'epilepsia __ (focal / generalizada)',
+    th:'__ (p. ej. levetiracetam 1000 mg 1-0-1)',
+    evolucion:`Control de crisis: última crisis en __ (libre de crisis desde __ / __ crisis desde la última visita).
+Tipo de crisis: __. Adherencia: __. Efectos adversos: __.
+Desencadenantes identificados: __ (privación de sueño, olvido de dosis, alcohol).`,
+    expl:'epilepsia',
+    jc:'epilepsia __',
+    plan:['Mantener tratamiento sin cambios','Medidas de estilo de vida: sueño regular, evitar alcohol, adherencia estricta','Recordar normativa de conducción según periodo libre de crisis','Revisión en __ meses']
+  },
+};
+function cargarPlantillaSeg(key){
+  const p=PLANTILLAS_SEG[key];if(!p)return;
+  // asegurarse de estar en modo seguimiento
+  if(tipoActual==='primera'){document.querySelector('#tipoInforme button[data-tipo="seguimiento"]').click();}
+  const set=(id,val)=>{const el=$('i_'+id);if(el)el.value=val;};
+  set('seguim',p.seguim);
+  set('ttohab',p.th);
+  set('evolucion',p.evolucion);
+  set('expl',EXPL[p.expl]||'');
+  set('jc',p.jc);
+  set('plan',(p.plan||[]).map(x=>'- '+x).join('\n'));
+  genInforme();
+  toast('Plantilla de '+p.label+' cargada');
+}
+function buildPlantillasBar(){
+  const host=$('plantillasBar');if(!host)return;
+  if(tipoActual==='primera'){host.innerHTML='';return;}
+  host.innerHTML='<div style="margin-bottom:8px"><span style="font-size:12px;color:var(--muted);margin-right:6px">Plantilla completa:</span>'+
+    Object.keys(PLANTILLAS_SEG).map(k=>`<button class="copybtn" onclick="cargarPlantillaSeg('${k}')">${PLANTILLAS_SEG[k].label}</button>`).join(' ')+'</div>';
+}
+const EXPL_TABS=[['cribado','Cribado'],['enrl','ENRL detallada'],['cognitivo','Deterioro cognitivo'],['parkinson','Parkinson'],['migrana','Migraña'],['epilepsia','Epilepsia'],['cefalea','Cefalea']];
 const et=$('explTabs');
 EXPL_TABS.forEach((m,i)=>{
   const b=document.createElement('button');b.textContent=m[1];if(i===0)b.classList.add('on');
@@ -866,6 +971,9 @@ const FARMACOS=[
    {ind:'Hipertensión intracraneal idiopática',plan:`ACETAZOLAMIDA: iniciar 250 mg cada 12 horas; subir progresivamente según respuesta y tolerancia hasta 1-2 g al día repartidos.`},
    {ind:'Vértigo/ataxia episódica, migraña vestibular (seleccionados)',plan:`ACETAZOLAMIDA 250 mg al día, ajustar según respuesta.`},
  ]},
+ {n:'ALMOTRIPTÁN',inds:[
+   {ind:'Migraña (tratamiento agudo)',plan:`ALMOTRIPTÁN 12,5 mg al inicio de la crisis; puede repetirse una segunda dosis a las 2 horas si reaparece (máximo 25 mg al día).`},
+ ]},
  {n:'AMANTADINA',inds:[
    {ind:'Discinesias en enfermedad de Parkinson',plan:`AMANTADINA: 100 mg por la mañana; puede añadirse una segunda toma a mediodía. Evitar la toma nocturna porque puede causar insomnio.`},
    {ind:'Fatiga',plan:`AMANTADINA 100 mg por la mañana, con posible segunda toma a mediodía.`},
@@ -928,6 +1036,9 @@ const FARMACOS=[
    {ind:'Dolor neuropático',plan:`DULOXETINA 30 mg al día durante 1 semana, luego 60 mg al día. Puede tardar 3-4 semanas en hacer efecto.`},
    {ind:'Migraña/cefalea con comorbilidad ansioso-depresiva',plan:`DULOXETINA 30 mg al día, subir a 60 mg al día según respuesta.`},
  ]},
+ {n:'ELETRIPTÁN',inds:[
+   {ind:'Migraña (tratamiento agudo)',plan:`ELETRIPTÁN 40 mg al inicio de la crisis; puede repetirse una segunda dosis a las 2 horas si reaparece (máximo 80 mg al día). Comprimidos de 20 y 40 mg.`},
+ ]},
  {n:'ENTACAPONA',inds:[
    {ind:'Enfermedad de Parkinson (con levodopa, fluctuaciones)',plan:`ENTACAPONA 200 mg con cada toma de levodopa (máximo 10 tomas al día). Existe combinación fija levodopa/carbidopa/entacapona.`},
  ]},
@@ -952,6 +1063,9 @@ const FARMACOS=[
  ]},
  {n:'FREMANEZUMAB',inds:[
    {ind:'Migraña (preventivo, anti-CGRP)',plan:`FREMANEZUMAB 225 mg subcutáneo una vez al mes, o 675 mg (3 inyecciones) cada 3 meses. Autoinyección domiciliaria.`},
+ ]},
+ {n:'FROVATRIPTÁN',inds:[
+   {ind:'Migraña (tratamiento agudo)',plan:`FROVATRIPTÁN 2,5 mg al inicio de la crisis; puede repetirse a las 2 horas si reaparece (máximo 5 mg al día). Vida media larga: menor tasa de recurrencia, útil en migraña menstrual.`},
  ]},
  {n:'GABAPENTINA',inds:[
    {ind:'Dolor neuropático',plan:`GABAPENTINA: 300 mg por la noche los días 1-3 → 300 mg cada 12 horas los días 4-6 → 300 mg cada 8 horas desde el día 7. Subir 300 mg cada 3-7 días según respuesta hasta 900-1800 mg al día (máximo 3600 mg al día).`},
@@ -1105,6 +1219,9 @@ const FARMACOS=[
  {n:'VERAPAMILO',inds:[
    {ind:'Cefalea en racimos (preventivo)',plan:`VERAPAMILO: iniciar 80 mg cada 8 horas; subir progresivamente según respuesta (a menudo 240-480 mg al día) con control de ECG.`},
  ]},
+ {n:'ZOLMITRIPTÁN',inds:[
+   {ind:'Migraña (tratamiento agudo)',plan:`ZOLMITRIPTÁN 2,5 mg al inicio de la crisis; puede repetirse a las 2 horas si reaparece (máximo 10 mg al día). Si no responde a 2,5 mg, probar 5 mg en crisis posteriores. Existe comprimido bucodispersable y formulación nasal.`},
+ ]},
  {n:'ZONISAMIDA',inds:[
    {ind:'Epilepsia focal',plan:`ZONISAMIDA: iniciar 50 mg al día; subir a intervalos de 1-2 semanas hasta 300-500 mg al día.`},
    {ind:'Enfermedad de Parkinson (adyuvante)',plan:`ZONISAMIDA 25-50 mg al día como adyuvante.`},
@@ -1127,6 +1244,19 @@ function renderTrat(){
 }
 function copyPlan(btn){const t=btn.closest('.indic').querySelector('[data-plan]').value.trim();copyText(t,btn)}
 function volcarPlan(btn){const t=btn.closest('.indic').querySelector('[data-plan]').value.trim();insertTo('plan',t)}
+function norm(s){return (s||'').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'')}
+function filterFarmacos(q){
+  const term=norm(q.trim());
+  const host=$('tratHost');
+  host.querySelectorAll('details.fam').forEach((det,i)=>{
+    const f=FARMACOS[i];
+    if(!term){det.style.display='';det.open=false;return}
+    const enNombre=norm(f.n).includes(term);
+    const enInd=f.inds.some(it=>norm(it.ind).includes(term)||norm(it.plan).includes(term));
+    if(enNombre||enInd){det.style.display='';det.open=true}
+    else{det.style.display='none'}
+  });
+}
 renderTrat();
 
 /* ===== NO FARMACOLÓGICO (con base en evidencia) ===== */
