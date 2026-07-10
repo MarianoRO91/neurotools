@@ -33,6 +33,7 @@
   textarea{min-height:64px;resize:vertical}
   #campos textarea{min-height:96px;line-height:1.45;font-size:14px}
   #campos textarea.campo-sm{min-height:40px}
+  #campos textarea#i_evolucion{min-height:220px}
   #campos .row{margin-bottom:8px}
   #campos label{font-size:11px}
   #informe .out{min-height:200px;font-size:13px;line-height:1.5}
@@ -259,8 +260,8 @@
 <!-- ================= INFORME RM (neuroeje / EM) ================= -->
 <section class="tab" id="rmforme">
   <div class="card" style="background:var(--panel2)">
-    <h2>Resumen estructurado de RM para PPCC</h2>
-    <p class="mini">Encuesta para volcar una línea <span class="fixed">- RM [neuroeje/cerebral/medular] (mmm/aa): ...</span> en el apartado de PRUEBAS COMPLEMENTARIAS del informe. Registros diferenciados: <b>ausente</b> (visto y negativo) ≠ <b>no valorable</b> ≠ <b>no cuantificada</b> ≠ <b>no consta</b>. Rangos de carga lesional sin adjetivos. DIS x/5; DIT solo «sí» con lesiones nuevas frente a previo comparable o coexistencia captante/no captante. Todo local, nada sale del navegador.</p>
+    <h2>Resumen estructurado de RM basal (HUVR) para PPCC</h2>
+    <p class="mini">Encuesta para volcar la línea de <b>RM basal</b> <span class="fixed">- RM [neuroeje/cerebral/medular] basal en HUVR (mmm/aa): ...</span> en el apartado de PRUEBAS COMPLEMENTARIAS del informe inicial. Las RM de seguimiento se documentan en el informe evolutivo como «de control» en texto libre. Registros diferenciados: <b>ausente</b> (visto y negativo) ≠ <b>no valorable</b> ≠ <b>no cuantificada</b> ≠ <b>no consta</b>. Rangos de carga lesional sin adjetivos. DIS x/5; DIT solo «sí» con lesiones nuevas frente a previo comparable o coexistencia captante/no captante. Todo local, nada sale del navegador.</p>
   </div>
   <div class="grid g2">
     <div>
@@ -397,34 +398,34 @@ const DMT_TXT=`DMT actual:
 - Adherencia y tolerancia: buena
 - Efectos adversos / Infecciones intercurrentes: niega`;
 const EVOL_TXT=`
-- ¿Sospecha de brote desde última revisión?: no
-- Quejas cognitivas: niega
-- Fatiga: niega
-- Ánimo/sueño: bien de ánimo, duerme bien
-- Problemas visuales: niega
-- Déficit motor / Torpeza manual / Espasticidad: niega
-- Déficit sensitivo: niega
-- Marcha (distancia máxima / tropiezos): marcha no restringida
-- Esfínteres (urinario / fecal / sexual): niega
-- Otros síntomas: niega
+
+No brotes desde la última revisión. Niega quejas cognitivas. Niega fatiga. Bien de ánimo, duerme bien. Niega problemas visuales. Niega déficit motor, torpeza manual o espasticidad. Niega déficit sensitivo. Marcha no restringida. Niega alteraciones esfinterianas. Niega otros síntomas.
 
 Actividad física habitual: `;
+
 /* Pruebas complementarias con fecha (botón junto a PC) */
 const PRUEBAS_PC=['RM','RM medular','Analítica','LCR','sNfL','PEV','OCT'];
+const PRUEBAS_PC_EVO=['RM cerebral','RM medular','Analítica','LCR','sNfL','PEV','OCT'];
 const MESES=['Ene','Feb','Mar','Abr','May','Jun','Jul','Ago','Sep','Oct','Nov','Dic'];
 function buildPcBtns(){
   const host=$('pcBtns');if(!host)return;
   const now=new Date();const mDef=MESES[now.getMonth()]+'/'+String(now.getFullYear()).slice(2);
-  let html=PRUEBAS_PC.map(p=>`<button class="copybtn" onclick="addPrueba('${p}')">${p}</button>`).join('');
+  const lista=tipoActual==='inicial'?PRUEBAS_PC:PRUEBAS_PC_EVO;
+  let html=lista.map(p=>`<button class="copybtn" onclick="addPrueba('${p}')">${p}</button>`).join('');
   html+=` <input id="pcFecha" type="text" value="${mDef}" style="width:64px;padding:3px 6px" placeholder="mes/aa">`;
   host.innerHTML=html;
 }
 function addPrueba(p){
   const el=$('i_pc');if(!el)return;
   const f=($('pcFecha')?$('pcFecha').value:'').trim();
-  const linea=f?`- ${p} (${f}): `:`- ${p} (): `;
+  // En informe evolutivo, las RM se documentan como "de control" (texto libre para lesiones nuevas, atrofia, etc.)
+  let etiqueta=p;
+  if(tipoActual!=='inicial' && /^RM\b/.test(p)){
+    etiqueta=p==='RM'?'RM de control':p.replace(/^RM\s+/,'RM ')+' de control';
+  }
+  const linea=f?`- ${etiqueta} (${f}): `:`- ${etiqueta} (): `;
   const lines=(el.value||'').split('\n');
-  if(lines.some(l=>l.startsWith(`- ${p} (${f}):`))){toast('Ya añadida');return;}
+  if(lines.some(l=>l.startsWith(`- ${etiqueta} (${f}):`))){toast('Ya añadida');return;}
   el.value=(el.value?el.value.replace(/\s*$/,'')+'\n':'')+linea;
   genInforme();el.focus();el.selectionStart=el.selectionEnd=el.value.length;
 }
@@ -1123,7 +1124,7 @@ function rmDIT(){
 function rmBuildText(){
   const P=[]; // fragmentos que se unen con '. '
   const est = RM.estudio;
-  const enc = `- RM ${est} (${RM.fecha.trim()||'/'}):`;
+  const enc = `- RM ${est} basal en HUVR (${RM.fecha.trim()||'/'}):`;
   // 2 previo
   let prevTxt='';
   if(RM.previo==='no') prevTxt='sin estudio previo para comparación';
