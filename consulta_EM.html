@@ -122,6 +122,7 @@
   <button data-tab="informe" class="active">Informe</button>
   <button data-tab="edss">EDSS</button>
   <button data-tab="escalas">Escalas EM</button>
+  <button data-tab="rmforme">Informe RM</button>
   <button data-tab="tme">TME</button>
   <button data-tab="sintomatico">Sintomático</button>
   <div class="navneuron" aria-hidden="true">
@@ -253,6 +254,35 @@
     <p class="mini">Planes prerellenados con pautas habituales, editables (tus cambios se guardan). Al copiar se vuelca solo el plan. Las advertencias quedan debajo y no se copian. Algunos son uso fuera de indicación en EM. Revisa cada dosis antes de prescribir.</p>
   </div>
   <div id="sintHost"></div>
+</section>
+
+<!-- ================= INFORME RM (neuroeje / EM) ================= -->
+<section class="tab" id="rmforme">
+  <div class="card" style="background:var(--panel2)">
+    <h2>Resumen estructurado de RM para PPCC</h2>
+    <p class="mini">Encuesta para volcar una línea <span class="fixed">- RM [neuroeje/cerebral/medular] (mmm/aa): ...</span> en el apartado de PRUEBAS COMPLEMENTARIAS del informe. Registros diferenciados: <b>ausente</b> (visto y negativo) ≠ <b>no valorable</b> ≠ <b>no cuantificada</b> ≠ <b>no consta</b>. Rangos de carga lesional sin adjetivos. DIS x/5; DIT solo «sí» con lesiones nuevas frente a previo comparable o coexistencia captante/no captante. Todo local, nada sale del navegador.</p>
+  </div>
+  <div class="grid g2">
+    <div>
+      <div class="card">
+        <h2>Encuesta <button class="btn ghost sm" onclick="rmReset()">Limpiar</button></h2>
+        <div id="rmForm"></div>
+        <button class="btn" onclick="rmBuild()">Generar resumen</button>
+      </div>
+    </div>
+    <div>
+      <div class="card">
+        <h2>Resumen RM
+          <span style="display:flex;gap:6px;margin-left:auto">
+            <button class="copybtn" onclick="copyText($('rm_out').textContent.trim(),this)">copiar</button>
+            <button class="copybtn" onclick="rmToInforme()">↑ volcar a PPCC</button>
+          </span>
+        </h2>
+        <div class="out" id="rm_out" style="min-height:200px;font-size:13px;line-height:1.5">Rellena la encuesta y pulsa «Generar resumen».</div>
+        <p class="mini" id="rm_pend" style="margin-top:10px"></p>
+      </div>
+    </div>
+  </div>
 </section>
 
 </main>
@@ -956,6 +986,259 @@ function renderSint(){
   bindPlans(host);
 }
 renderSint();
+
+/* ===================== INFORME RM (neuroeje / EM) ===================== */
+/* Modelo de la encuesta. Cada campo: id, etiqueta, tipo (seg|text|topo), opciones. */
+const RM_MESES=['ene','feb','mar','abr','may','jun','jul','ago','sep','oct','nov','dic'];
+function rmDefFecha(){const n=new Date();return RM_MESES[n.getMonth()]+'/'+String(n.getFullYear()).slice(2);}
+
+/* Topografías DIS McDonald: cuentan para x/5 -> pv, cortical(leucocortical), infratentorial(tronco/cerebelo), medular, óptico */
+const RM_TOPOS=[
+  {id:'pv',   lab:'Periventricular',            dis:'pv'},
+  {id:'lc',   lab:'Leucocortical', dis:'cortical'},
+  {id:'tronco',lab:'Tronco encefálico',         dis:'infra', desc:'p. ej. protuberancia'},
+  {id:'cbl',  lab:'Cerebelo',                   dis:'infra'},
+  {id:'cc',   lab:'Cuerpo calloso',             dis:null,   desc:'interfases calloso-septales'},
+  {id:'opt',  lab:'Vía óptica anterior',        dis:'optico', desc:'lateralidad / segmento'},
+  {id:'med',  lab:'Médula espinal',             dis:'medular', desc:'número / nivel'},
+];
+
+let RM={}; // estado
+
+function rmInit(){
+  RM={
+    estudio:'neuroeje',
+    fecha:rmDefFecha(),
+    previo:'no',            // hay-comp / hay-nocomp / no
+    tipo:'tipicas',        // tipicas / atipicas
+    tipoAlt:'',
+    carga:'',              // '' | 0-20 | 20-50 | 50-100 | >100
+    topo:{},               // id -> {on:bool, desc:''}
+    nuevas:'',             // '' | si | no | nv
+    nuevasN:'',            // número de lesiones nuevas/aumentadas
+    nuevasLoc:'',          // localización
+    vena:'',               // presente(txt)/ausente/nv/no-consta
+    venaTxt:'',
+    black:'noconsta',      // ausentes/presentes/novalorables/noconsta
+    prl:'noconsta',
+    gd:'',                 // ausente/presente(txt)/novalorable
+    gdTxt:'',
+    lepto:'noconsta',      // ausente/presente/noobtenida/noconsta
+    atrofiaG:'nocuant',    // ausente/leve/moderada/grave/nocuant
+    atrofiaC:'',           // estable/progresiva/sinprevio/''
+    incid:'',
+  };
+  RM_TOPOS.forEach(t=>RM.topo[t.id]={on:false,desc:''});
+}
+rmInit();
+
+function seg(field,opts,cur){
+  return `<div class="seg" data-field="${field}">`+opts.map(o=>
+    `<button data-val="${o.v}" class="${cur===o.v?'on':''}" onclick="rmSeg('${field}','${o.v}',this)">${o.l}</button>`
+  ).join('')+`</div>`;
+}
+function rmSeg(field,val,btn){
+  RM[field]=val;
+  btn.parentNode.querySelectorAll('button').forEach(b=>b.classList.remove('on'));
+  btn.classList.add('on');
+  // refrescos que dependen de una selección
+  if(['tipo','nuevas','vena','gd','previo'].includes(field)) rmRenderConditionals();
+}
+
+function rmRenderForm(){
+  const h=$('rmForm'); if(!h) return;
+  let html='';
+  // 1. estudio + fecha
+  html+=`<div class="row"><label>Estudio</label>${seg('estudio',[{v:'neuroeje',l:'neuroeje'},{v:'cerebral',l:'cerebral'},{v:'medular',l:'medular'}],RM.estudio)}</div>`;
+  html+=`<div class="row"><label>Fecha (mmm/aa)</label><input id="rm_fecha" type="text" style="width:100px" value="${RM.fecha}" oninput="RM.fecha=this.value"></div>`;
+  // 2. previo
+  html+=`<div class="row"><label>Comparación con previo</label>${seg('previo',[{v:'hay-comp',l:'previo comparable'},{v:'hay-nocomp',l:'previo NO comparable'},{v:'no',l:'sin previo'}],RM.previo)}
+    <input id="rm_previoTxt" type="text" style="margin-top:6px;font-size:12px" placeholder="detalle opcional (p. ej. externo nov/25 baja resolución)" value="${RM.previoTxt||''}" oninput="RM.previoTxt=this.value"></div>`;
+  // 3. características
+  html+=`<div class="row"><label>Características de las lesiones</label>${seg('tipo',[{v:'tipicas',l:'desmielinizantes típicas'},{v:'atipicas',l:'atípicas'}],RM.tipo)}
+    <span id="rm_tipoAltWrap" style="display:${RM.tipo==='atipicas'?'block':'none'};margin-top:6px"><input id="rm_tipoAlt" type="text" style="font-size:12px" placeholder="diagnóstico alternativo a considerar" value="${RM.tipoAlt||''}" oninput="RM.tipoAlt=this.value"></span></div>`;
+  // 4. carga
+  html+=`<div class="row"><label>Carga lesional en T2 (solo rango)</label>${seg('carga',[{v:'0-20',l:'0-20'},{v:'20-50',l:'20-50'},{v:'50-100',l:'50-100'},{v:'>100',l:'>100 / incontables'}],RM.carga)}</div>`;
+  // 5. topografías
+  html+=`<div class="row"><label>Topografías afectas (marca las positivas; descriptor opcional en óptico/médula/tronco/CC)</label><div style="display:flex;flex-direction:column;gap:4px;margin-top:4px">`;
+  RM_TOPOS.forEach(t=>{
+    const st=RM.topo[t.id];
+    html+=`<div class="opt" style="cursor:default">
+      <input type="checkbox" ${st.on?'checked':''} onchange="RM.topo['${t.id}'].on=this.checked;rmToggleDesc('${t.id}',this.checked)">
+      <span class="lab">${t.lab}${t.dis?' <span class="tag" style="text-transform:none">DIS</span>':' <span class="tag" style="text-transform:none;opacity:.5">apoyo</span>'}</span>
+    </div>
+    <input id="rm_desc_${t.id}" type="text" style="font-size:12px;display:${st.on&&t.desc!==undefined?'block':'none'};margin:2px 0 4px 26px;width:calc(100% - 26px)" placeholder="${t.desc||'descriptor'}" value="${st.desc||''}" oninput="RM.topo['${t.id}'].desc=this.value">`;
+  });
+  html+=`</div></div>`;
+  // 6. nuevas/aumentadas (desplegable solo con previo comparable)
+  html+=`<div class="row" id="rm_nuevasWrap" style="display:${RM.previo==='hay-comp'?'block':'none'}"><label>Lesiones nuevas o aumentadas frente al previo</label>${seg('nuevas',[{v:'si',l:'sí'},{v:'no',l:'no'},{v:'nv',l:'no valorable'}],RM.nuevas)}
+    <div id="rm_nuevasDetalle" style="display:${RM.nuevas==='si'?'flex':'none'};gap:8px;margin-top:6px;flex-wrap:wrap">
+      <input id="rm_nuevasN" type="text" style="width:80px;font-size:12px" placeholder="nº" value="${RM.nuevasN||''}" oninput="RM.nuevasN=this.value">
+      <input id="rm_nuevasLoc" type="text" style="flex:1;min-width:140px;font-size:12px" placeholder="localización de las nuevas/aumentadas" value="${RM.nuevasLoc||''}" oninput="RM.nuevasLoc=this.value">
+    </div></div>`;
+  // 7. vena central
+  html+=`<div class="row"><label>Signo de vena central</label>${seg('vena',[{v:'presente',l:'presente'},{v:'ausente',l:'ausente'},{v:'nv',l:'no valorable'},{v:'noconsta',l:'no consta'}],RM.vena)}
+    <input id="rm_venaTxt" type="text" style="margin-top:6px;font-size:12px;display:${RM.vena==='presente'?'block':'none'}" placeholder="dónde (p. ej. SB frontal bilateral)" value="${RM.venaTxt||''}" oninput="RM.venaTxt=this.value"></div>`;
+  // 8. black holes
+  html+=`<div class="row"><label>Black holes (T1)</label>${seg('black',[{v:'ausentes',l:'ausentes'},{v:'presentes',l:'presentes'},{v:'novalorables',l:'no valorables'},{v:'noconsta',l:'no consta'}],RM.black)}</div>`;
+  // 9. PRL
+  html+=`<div class="row"><label>Anillo paramagnético (PRL)</label>${seg('prl',[{v:'ausente',l:'ausente'},{v:'presente',l:'presente'},{v:'novalorable',l:'no valorable'},{v:'noconsta',l:'no consta'}],RM.prl)}</div>`;
+  // 10. gadolinio + lepto
+  html+=`<div class="row"><label>Realce con gadolinio (parenquimatoso)</label>${seg('gd',[{v:'ausente',l:'ausente'},{v:'presente',l:'presente'},{v:'novalorable',l:'no valorable'}],RM.gd)}
+    <input id="rm_gdTxt" type="text" style="margin-top:6px;font-size:12px;display:${RM.gd==='presente'?'block':'none'}" placeholder="número y localización" value="${RM.gdTxt||''}" oninput="RM.gdTxt=this.value"></div>`;
+  html+=`<div class="row"><label>Realce leptomeníngeo</label>${seg('lepto',[{v:'ausente',l:'ausente'},{v:'presente',l:'presente'},{v:'noobtenida',l:'secuencia no obtenida'},{v:'noconsta',l:'no consta'}],RM.lepto)}</div>`;
+  // 11. atrofia
+  html+=`<div class="row"><label>Atrofia (grado)</label>${seg('atrofiaG',[{v:'ausente',l:'ausente'},{v:'leve',l:'leve'},{v:'moderada',l:'moderada'},{v:'grave',l:'grave'},{v:'nocuant',l:'no cuantificada'}],RM.atrofiaG)}</div>`;
+  html+=`<div class="row"><label>Atrofia (curso)</label>${seg('atrofiaC',[{v:'estable',l:'estable'},{v:'progresiva',l:'progresiva'},{v:'sinprevio',l:'sin previo'},{v:'',l:'—'}],RM.atrofiaC)}</div>`;
+  // 12. incidentales
+  html+=`<div class="row"><label>Hallazgos incidentales relevantes</label><input id="rm_incid" type="text" style="font-size:12px" placeholder="p. ej. hemangioma C7; degenerativos C5-C6" value="${RM.incid||''}" oninput="RM.incid=this.value"></div>`;
+  h.innerHTML=html;
+}
+function rmToggleDesc(id,on){const el=$('rm_desc_'+id);if(el)el.style.display=on?'block':'none';}
+function rmRenderConditionals(){
+  const alt=$('rm_tipoAltWrap');if(alt)alt.style.display=RM.tipo==='atipicas'?'block':'none';
+  const nw=$('rm_nuevasWrap');if(nw)nw.style.display=RM.previo==='hay-comp'?'block':'none';
+  const nwt=$('rm_nuevasDetalle');if(nwt)nwt.style.display=RM.nuevas==='si'?'flex':'none';
+  const vt=$('rm_venaTxt');if(vt)vt.style.display=RM.vena==='presente'?'block':'none';
+  const gt=$('rm_gdTxt');if(gt)gt.style.display=RM.gd==='presente'?'block':'none';
+}
+
+/* --- Cálculo DIS x/5 --- */
+function rmDIS(){
+  const buckets={pv:false,cortical:false,infra:false,medular:false,optico:false};
+  RM_TOPOS.forEach(t=>{if(t.dis&&RM.topo[t.id].on)buckets[t.dis]=true;});
+  const n=Object.values(buckets).filter(Boolean).length;
+  return {n, ok:n>=2}; // DIS McDonald: >=2 de las topografías características
+}
+/* --- Cálculo DIT por RM --- */
+function rmDIT(){
+  // sí: lesiones nuevas frente a previo comparable, o coexistencia captante + no captante en el mismo estudio
+  const nuevasSi = RM.previo==='hay-comp' && RM.nuevas==='si';
+  const coexist = RM.gd==='presente'; // hay captante(s); no captantes se asumen presentes por la carga T2
+  if(nuevasSi||coexist) return 'sí';
+  return 'no valorable';
+}
+
+/* --- Construcción de la línea-resumen (orden exacto del prompt) --- */
+function rmBuildText(){
+  const P=[]; // fragmentos que se unen con '. '
+  const est = RM.estudio;
+  const enc = `- RM ${est} (${RM.fecha.trim()||'/'}):`;
+  // 2 previo
+  let prevTxt='';
+  if(RM.previo==='no') prevTxt='sin estudio previo para comparación';
+  else if(RM.previo==='hay-nocomp') prevTxt='con estudio previo no comparable';
+  else prevTxt='comparado con previo';
+  if((RM.previoTxt||'').trim()) prevTxt+=` (${RM.previoTxt.trim()})`;
+  P.push(prevTxt);
+  // 3 características
+  if(RM.tipo==='tipicas') P.push('lesiones con características desmielinizantes típicas');
+  else P.push('lesiones de características atípicas'+((RM.tipoAlt||'').trim()?`, a considerar ${RM.tipoAlt.trim()}`:''));
+  // 4 carga
+  if(RM.carga) P.push(`carga lesional en T2 de ${RM.carga}`);
+  // 5 topografías
+  const topos=[];
+  RM_TOPOS.forEach(t=>{const st=RM.topo[t.id];if(st.on){topos.push(t.lab.toLowerCase()+((st.desc||'').trim()?` (${st.desc.trim()})`:''));}});
+  if(topos.length) P.push('topografías afectas: '+topos.join(', '));
+  // 6 nuevas
+  if(RM.previo==='hay-comp'){
+    if(RM.nuevas==='si'){
+      const n=(RM.nuevasN||'').trim(), loc=(RM.nuevasLoc||'').trim();
+      let f='lesiones nuevas o aumentadas';
+      if(n&&loc) f+=`: ${n} en ${loc}`;
+      else if(n) f+=`: ${n}`;
+      else if(loc) f+=` en ${loc}`;
+      P.push(f);
+    }
+    else if(RM.nuevas==='no') P.push('sin lesiones nuevas ni aumentadas');
+    else if(RM.nuevas==='nv') P.push('lesiones nuevas no valorables');
+  }
+  // 7 vena central
+  if(RM.vena==='presente') P.push('signo de vena central presente'+((RM.venaTxt||'').trim()?` (${RM.venaTxt.trim()})`:''));
+  else if(RM.vena==='ausente') P.push('signo de vena central ausente');
+  else if(RM.vena==='nv') P.push('signo de vena central no valorable');
+  // no consta -> se omite del texto (irá a pendientes)
+  // 8 black holes
+  const bhMap={ausentes:'black holes ausentes',presentes:'black holes presentes',novalorables:'black holes no valorables',noconsta:'black holes no consta'};
+  P.push(bhMap[RM.black]);
+  // 9 PRL
+  const prlMap={ausente:'anillo paramagnético ausente',presente:'anillo paramagnético presente',novalorable:'anillo paramagnético no valorable',noconsta:'anillo paramagnético no consta'};
+  P.push(prlMap[RM.prl]);
+  // 10 gadolinio + actividad
+  let gdTxt='';
+  if(RM.gd==='ausente') gdTxt='sin realce con gadolinio, sin actividad inflamatoria actual';
+  else if(RM.gd==='presente') gdTxt='realce con gadolinio presente'+((RM.gdTxt||'').trim()?` (${RM.gdTxt.trim()})`:'')+', con actividad inflamatoria actual';
+  else if(RM.gd==='novalorable') gdTxt='realce con gadolinio no valorable';
+  // lepto: solo se explicita si no es 'no consta'
+  if(RM.lepto==='ausente') gdTxt+=(gdTxt?'; ':'')+'realce leptomeníngeo ausente';
+  else if(RM.lepto==='presente') gdTxt+=(gdTxt?'; ':'')+'realce leptomeníngeo presente';
+  else if(RM.lepto==='noobtenida') gdTxt+=(gdTxt?'; ':'')+'realce leptomeníngeo no valorable (secuencia no obtenida)';
+  if(gdTxt) P.push(gdTxt);
+  // 11 atrofia
+  const agMap={ausente:'atrofia ausente',leve:'atrofia leve',moderada:'atrofia moderada',grave:'atrofia grave',nocuant:'atrofia no cuantificada'};
+  let atr=agMap[RM.atrofiaG];
+  const acMap={estable:'curso estable',progresiva:'curso progresivo',sinprevio:'curso sin previo para comparar'};
+  if(RM.atrofiaC&&acMap[RM.atrofiaC]) atr+=', '+acMap[RM.atrofiaC];
+  P.push(atr);
+  // 12 incidentales
+  if((RM.incid||'').trim()) P.push('hallazgos incidentales: '+RM.incid.trim());
+  // 13 cierre McDonald (a continuación, misma frase)
+  const dis=rmDIS();
+  const dit=rmDIT();
+  const cierre=`Criterios diagnósticos McDonald 2024 por RM: DIS ${dis.ok?'sí':'no'} (${dis.n}/5); DIT ${dit}`;
+  // ensamblado: capitaliza la inicial de cada frase del cuerpo
+  const cap=s=>s?s.charAt(0).toUpperCase()+s.slice(1):s;
+  let cuerpo=P.map(cap).join('. ');
+  return `${enc} ${cuerpo}. ${cierre}.`;
+}
+
+/* --- Variables pendientes (registro no cerrado) --> se listan para preguntar --- */
+function rmPendientes(){
+  const q=[];
+  if(RM.carga==='') q.push('carga lesional (rango en T2)');
+  if(RM.vena==='noconsta') q.push('signo de vena central');
+  if(RM.black==='noconsta') q.push('black holes');
+  if(RM.prl==='noconsta') q.push('anillo paramagnético (PRL)');
+  if(RM.gd==='') q.push('realce con gadolinio');
+  if(RM.gd==='novalorable') q.push('realce con gadolinio (queda no valorable)');
+  if(RM.lepto==='noconsta') q.push('realce leptomeníngeo');
+  if(RM.atrofiaG==='nocuant') q.push('atrofia (grado)');
+  if(!RM.atrofiaC) q.push('atrofia (curso)');
+  if(RM.previo==='hay-comp' && (RM.nuevas===''||RM.nuevas==='nv')) q.push('lesiones nuevas / aumentadas');
+  const anyTopo=RM_TOPOS.some(t=>RM.topo[t.id].on);
+  if(!anyTopo) q.push('topografías afectas (ninguna marcada)');
+  return q;
+}
+
+function rmBuild(){
+  const txt=rmBuildText();
+  $('rm_out').textContent=txt;
+  const pend=rmPendientes();
+  const pe=$('rm_pend');
+  if(pend.length){
+    pe.innerHTML=`<b style="color:var(--warn)">Pendiente de confirmar (no cerrado):</b> ${pend.join('; ')}. `+
+      `Revisa esos campos en la encuesta antes de volcar; si el informe no lo aporta, déjalo en el registro correcto y pregúntalo al radiólogo.`;
+  } else {
+    pe.innerHTML=`<span style="color:var(--ok)">Todas las variables resueltas.</span>`;
+  }
+}
+function rmReset(){rmInit();rmRenderForm();$('rm_out').textContent='Rellena la encuesta y pulsa «Generar resumen».';$('rm_pend').textContent='';}
+function rmToInforme(){
+  const txt=$('rm_out').textContent.trim();
+  if(!txt||txt.startsWith('Rellena')){toast('Genera el resumen primero');return;}
+  const el=$('i_pc');
+  if(!el){toast('Abre la pestaña Informe primero');return;}
+  // eliminar una línea placeholder de RM del mismo estudio/fecha si existe, y añadir
+  el.value=(el.value?el.value.replace(/\s*$/,'')+'\n':'')+sanitizeDiraya(txt);
+  genInforme();
+  // saltar a la pestaña Informe para ver el resultado
+  document.querySelectorAll('nav button').forEach(x=>x.classList.remove('active'));
+  document.querySelectorAll('.tab').forEach(x=>x.classList.remove('active'));
+  document.querySelector('nav button[data-tab="informe"]').classList.add('active');
+  $('informe').classList.add('active');
+  toast('Volcado a PPCC');
+}
+rmRenderForm();
 </script>
 </body>
 </html>
